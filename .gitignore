@@ -12,7 +12,7 @@
 *.so
 *.dylib
 
-# Test binary, built with `go test -c`
+# Test binary, built with `go tests -c`
 *.test
 
 # Output of the go coverage tool, specifically when used with LiteIDE
@@ -248,3 +248,6 @@ Temporary Items
 .ionide
 
 # End of https://www.toptal.com/developers/gitignore/api/go,goland+all,intellij,macos,visualstudiocode
+.air.toml
+bin
+tmp
