@@ -12,7 +12,8 @@ type Application struct {
 }
 
 type Commands struct {
-	Car *command.AddCarHandler
+	AddCar     *command.AddCarHandler
+	AddJourney *command.AddJourneyHandler
 }
 
 type Queries struct {
@@ -21,11 +22,13 @@ type Queries struct {
 
 func InitializeApp() *Application {
 	// Prepare dependencies to be injected
-	carRepo := adapters.NewInMemoryCarRepository()
+	carRepoImpl := adapters.NewInMemoryCarRepository()
+	journeyRepoImpl := adapters.NewInMemoryJourneyRepository()
 
 	return &Application{
 		Commands: Commands{
-			Car: command.NewAddCarHandler(carRepo),
+			AddCar:     command.NewAddCarHandler(carRepoImpl),
+			AddJourney: command.NewAddJourneyHandler(journeyRepoImpl),
 		},
 		Queries: Queries{
 			Status: query.NewStatusHandler(),

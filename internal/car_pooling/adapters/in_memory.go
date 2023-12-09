@@ -4,6 +4,7 @@ import (
 	"car-pooling-service/internal/domain"
 	"fmt"
 	"sync"
+	"time"
 )
 
 type InMemoryCarRepository struct {
@@ -42,6 +43,48 @@ func (r *InMemoryCarRepository) getAllCars() []*dto.Car {
 func (r *InMemoryCarRepository) LogAllCars() {
 	for _, car := range r.cars {
 		fmt.Printf("Car ID: %d, Seats: %d, Available Seats: %d\n", car.ID, car.Seats, car.AvailableSeats)
+	}
+	fmt.Printf("\n")
+}
+
+/////
+
+type InMemoryJourneyRepository struct {
+	journeys map[int]*dto.Journey
+	mutex    sync.RWMutex
+}
+
+func NewInMemoryJourneyRepository() *InMemoryJourneyRepository {
+	return &InMemoryJourneyRepository{
+		journeys: make(map[int]*dto.Journey),
+	}
+}
+
+func (r *InMemoryJourneyRepository) AddJourney(journey *dto.Journey) error {
+	r.mutex.Lock()
+	defer r.mutex.Unlock()
+
+	if _, exists := r.journeys[journey.ID]; exists {
+		return fmt.Errorf("journey with ID %d already exists", journey.ID)
+	}
+
+	r.journeys[journey.ID] = journey
+
+	return nil
+}
+
+func (r *InMemoryJourneyRepository) getAllJourneys() []*dto.Journey {
+	var journeys []*dto.Journey
+	for _, journey := range r.journeys {
+		journeys = append(journeys, journey)
+	}
+
+	return journeys
+}
+
+func (r *InMemoryJourneyRepository) LogAllJourneys() {
+	for _, journey := range r.journeys {
+		fmt.Printf("Journey ID: %d, People: %d, Car Id: %d, WaitingSince: %s\n", journey.ID, journey.People, journey.CarId, journey.WaitingSince.Format(time.DateTime))
 	}
 	fmt.Printf("\n")
 }

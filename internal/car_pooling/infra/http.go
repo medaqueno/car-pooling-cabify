@@ -30,7 +30,16 @@ func (h *HTTPHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		h.handleAddCars(w, r)
+	case "/journey":
+		if r.Method != http.MethodPost {
+			http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
+			return
+		}
+		h.handleAddJourney(w, r)
+	default:
+		http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
 	}
+
 }
 
 // HTTP Ports.
@@ -56,7 +65,30 @@ func (h *HTTPHandler) handleAddCars(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	err = h.app.Commands.Car.Handle(addCarsRequest)
+	err = h.app.Commands.AddCar.Handle(addCarsRequest)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+}
+
+func (h *HTTPHandler) handleAddJourney(w http.ResponseWriter, r *http.Request) {
+	var addJourneyRequest dto.AddJourneyRequest
+
+	err := json.NewDecoder(r.Body).Decode(&addJourneyRequest)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	if !addJourneyRequest.IsValid() {
+		http.Error(w, "Invalid journey request data", http.StatusBadRequest)
+		return
+	}
+
+	err = h.app.Commands.AddJourney.Handle(addJourneyRequest)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
