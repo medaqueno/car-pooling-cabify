@@ -17,7 +17,8 @@ type Commands struct {
 }
 
 type Queries struct {
-	Status *query.StatusHandler
+	Status        *query.StatusHandler
+	LocateJourney *query.LocateCarByJourneyHandler
 }
 
 func InitializeApp() *Application {
@@ -31,7 +32,8 @@ func InitializeApp() *Application {
 			AddJourney: command.NewAddJourneyHandler(journeyRepoImpl),
 		},
 		Queries: Queries{
-			Status: query.NewStatusHandler(),
+			Status:        query.NewStatusHandler(),
+			LocateJourney: query.NewLocateJourneyHandler(journeyRepoImpl, carRepoImpl),
 		},
 	}
 }

@@ -36,6 +36,12 @@ func (h *HTTPHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		h.handleAddJourney(w, r)
+	case "/locate":
+		if r.Method != http.MethodPost {
+			http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
+			return
+		}
+		h.handleLocateJourney(w, r)
 	default:
 		http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
 	}
@@ -95,4 +101,28 @@ func (h *HTTPHandler) handleAddJourney(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.WriteHeader(http.StatusOK)
+}
+
+func (h *HTTPHandler) handleLocateJourney(w http.ResponseWriter, r *http.Request) {
+	var locateJourneyRequest dto.LocateJourneyRequest
+
+	if err := locateJourneyRequest.Validate(r); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	car, err := h.app.Queries.LocateJourney.Handle(locateJourneyRequest.ID)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusNotFound)
+		return
+	}
+
+	// No car assigned
+	if car == nil {
+		w.WriteHeader(http.StatusNoContent)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(car)
 }

@@ -1,6 +1,11 @@
 package dto
 
-import "time"
+import (
+	"fmt"
+	"net/http"
+	"strconv"
+	"time"
+)
 
 type AddCarRequest struct {
 	ID    int `json:"id"`
@@ -48,4 +53,32 @@ func NewJourney(ID int, people int) *Journey {
 		CarId:        nil,
 		WaitingSince: time.Now(),
 	}
+}
+
+type LocateJourneyRequest struct {
+	ID int
+}
+
+func (r *LocateJourneyRequest) Validate(req *http.Request) error {
+	err := req.ParseForm()
+
+	if err != nil {
+		return fmt.Errorf("bad request")
+	}
+
+	idStr := req.Form.Get("ID")
+	if idStr == "" {
+		return fmt.Errorf("ID is required")
+	}
+
+	r.ID, err = strconv.Atoi(idStr)
+	if err != nil {
+		return fmt.Errorf("ID must be an integer")
+	}
+
+	if r.ID <= 0 {
+		return fmt.Errorf("ID must be a positive integer")
+	}
+
+	return nil
 }

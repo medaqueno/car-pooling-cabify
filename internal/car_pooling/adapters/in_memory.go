@@ -88,3 +88,27 @@ func (r *InMemoryJourneyRepository) LogAllJourneys() {
 	}
 	fmt.Printf("\n")
 }
+
+func (r *InMemoryJourneyRepository) FindJourneyByID(journeyID int) (*dto.Journey, error) {
+	r.mutex.RLock()
+	defer r.mutex.RUnlock()
+
+	journey, exists := r.journeys[journeyID]
+	if !exists {
+		return nil, fmt.Errorf("no journey found for group ID %d", journeyID)
+	}
+
+	return journey, nil
+}
+
+func (r *InMemoryCarRepository) FindCarByID(carID int) (*dto.Car, error) {
+	r.mutex.RLock()
+	defer r.mutex.RUnlock()
+
+	car, exists := r.cars[carID]
+	if !exists {
+		return nil, fmt.Errorf("no car found with ID %d", carID)
+	}
+
+	return car, nil
+}
