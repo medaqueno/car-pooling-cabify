@@ -8,10 +8,53 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
-	"strings"
-	"sync"
 	"testing"
 )
+
+type Car struct {
+	ID    int `json:"id"`
+	Seats int `json:"seats"`
+}
+
+type Journey struct {
+	ID     int `json:"id"`
+	People int `json:"people"`
+}
+
+func buildRequest(method, url, contentType string, body []byte) (*http.Request, error) {
+	reader := bytes.NewReader(body)
+	request, err := http.NewRequest(method, url, reader)
+	if err != nil {
+		return nil, err
+	}
+	request.Header.Set("Content-Type", contentType)
+	return request, nil
+}
+
+type JourneyVerification struct {
+	ID                 int `json:"id"`
+	ExpectedStatusCode int `json:"expected_status_code"`
+}
+
+func verifyJourneyStatuses(t *testing.T, server *httptest.Server, journeys []JourneyVerification) {
+	for _, journey := range journeys {
+		request, err := buildRequest(http.MethodPost, server.URL+"/locate", "application/x-www-form-urlencoded", []byte(fmt.Sprintf("ID=%d", journey.ID)))
+		if err != nil {
+			t.Errorf("Failed to create POST request: %v", err)
+			return
+		}
+
+		response, err := server.Client().Do(request)
+		if err != nil {
+			t.Errorf("Failed to send POST request: %v", err)
+			return
+		}
+
+		if response.StatusCode != journey.ExpectedStatusCode {
+			t.Errorf("Unexpected status %d for journey %d, expected %d", response.StatusCode, journey.ID, journey.ExpectedStatusCode)
+		}
+	}
+}
 
 func TestCarAssignmentFlow(t *testing.T) {
 	// Initialize application
@@ -22,192 +65,243 @@ func TestCarAssignmentFlow(t *testing.T) {
 	server := httptest.NewServer(httpHandler)
 	defer server.Close()
 
-	// Register Cars
-	// Create car objects with different seat capacities
-	cars := []struct {
-		ID    int `json:"id"`
-		Seats int `json:"seats"`
-	}{
-		{1, 4},
-		{2, 5},
-		{3, 6},
-		{4, 6},
-		{5, 6},
+	// Define expected journey statuses for various scenarios
+	initialJourneyVerification := []JourneyVerification{
+		{1, 200},
+		{2, 200},
+		{3, 200},
+		{4, 200},
+		{5, 200},
+		{6, 204},
+		{7, 204},
 	}
 
-	requestAddCars(t, server, cars)
-
-	// Enqueue journeys
-	// Create journey objects with varying group sizes
-	journeys := []struct {
-		ID     int `json:"id"`
-		People int `json:"people"`
-	}{
-		{1, 4},
-		{2, 3},
-		{3, 6},
-		{4, 5},
-		{5, 4},
-		{6, 2},
-		{7, 6},
+	additionalCarVerification := []JourneyVerification{
+		{6, 200},
+		{7, 204},
 	}
 
-	// Enqueue journeys using POST request to /journey endpoint
-	for _, journey := range journeys {
-		requestEnqueueJourneys(t, server, journey)
+	remainingCarVerification := []JourneyVerification{
+		{7, 200},
 	}
 
-	application.Commands.AssignCarsToJourneys.Handle()
+	t.Run("Initial car addition and journey assignment", func(t *testing.T) {
+		// Create initial cars
+		initialCars := []Car{
+			{1, 4},
+			{2, 5},
+			{3, 6},
+			{4, 6},
+			{5, 6},
+		}
 
-	// Check Journeys
-	// Check locations of all journeys using POST request to /locate endpoint
-	expected := map[int]int{
-		1: 200, 2: 200, 3: 200,
-		4: 200, 5: 200, 6: 204,
-		7: 204,
-	}
-	// Check Journeys
-	// Check locations of all journeys using POST request to /locate endpoint
-	var wg sync.WaitGroup
-	for journeyID, statusCode := range expected {
-		wg.Add(1)
-		go func(journeyID int, statusCode int) {
-			defer wg.Done()
-			fmt.Printf("Processing groupID %v\n", journeyID)
-			verifyJourneyStatus(t, server, journeyID, statusCode)
-		}(journeyID, statusCode)
-	}
-	wg.Wait()
+		// Add initial cars
+		data, err := json.Marshal(initialCars)
+		if err != nil {
+			t.Errorf("Failed to marshal car data: %v", err)
+			return
+		}
 
-	// Add More Cars
-	cars2 := []struct {
-		ID    int `json:"id"`
-		Seats int `json:"seats"`
-	}{
-		{6, 4},
-		{7, 5},
-	}
+		request, err := buildRequest(http.MethodPut, server.URL+"/cars", "application/json", data)
+		if err != nil {
+			t.Errorf("Failed to create PUT request: %v", err)
+			return
+		}
 
-	requestAddCars(t, server, cars2)
-	application.Commands.AssignCarsToJourneys.Handle()
+		response, err := server.Client().Do(request)
+		if err != nil {
+			t.Errorf("Failed to send PUT request: %v", err)
+			return
+		}
 
-	expected2 := map[int]int{
-		6: 200,
-		7: 204,
-	}
-	var wg2 sync.WaitGroup
-	for journeyID, statusCode := range expected2 {
-		wg2.Add(1)
-		go func(journeyID int, statusCode int) {
-			defer wg2.Done()
-			fmt.Printf("Processing groupID %v\n", journeyID)
-			verifyJourneyStatus(t, server, journeyID, statusCode)
-		}(journeyID, statusCode)
-	}
-	wg2.Wait()
+		if response.StatusCode != http.StatusOK {
+			t.Errorf("Unexpected status code: %d", response.StatusCode)
+		}
 
-	// Add More Cars
-	cars3 := []struct {
-		ID    int `json:"id"`
-		Seats int `json:"seats"`
-	}{
-		{8, 6},
-	}
+		// Create journeys
+		initialJourneys := []Journey{
+			{1, 4},
+			{2, 3},
+			{3, 6},
+			{4, 5},
+			{5, 4},
+			{6, 2},
+			{7, 6},
+		}
 
-	requestAddCars(t, server, cars3)
-	application.Commands.AssignCarsToJourneys.Handle()
-	expected3 := map[int]int{
-		7: 200,
-	}
-	var wg3 sync.WaitGroup
-	for journeyID, statusCode := range expected3 {
-		wg3.Add(1)
-		go func(journeyID int, statusCode int) {
-			defer wg3.Done()
-			fmt.Printf("Processing groupID %v\n", journeyID)
-			verifyJourneyStatus(t, server, journeyID, statusCode)
-		}(journeyID, statusCode)
-	}
-	wg3.Wait()
+		// Enqueue journeys
+		for _, journey := range initialJourneys {
+			data, err := json.Marshal(journey)
+			if err != nil {
+				t.Errorf("Failed to marshal journey data: %v", err)
+				return
+			}
 
-}
+			request, err := buildRequest(http.MethodPost, server.URL+"/journey", "application/json", data)
+			if err != nil {
+				t.Errorf("Failed to create POST request: %v", err)
+				return
+			}
 
-func requestAddCars(t *testing.T, server *httptest.Server, cars []struct {
-	ID    int `json:"id"`
-	Seats int `json:"seats"`
-}) {
-	data, err := json.Marshal(cars)
-	if err != nil {
-		t.Errorf("Failed to marshal car data: %v", err)
-		return
-	}
+			response, err := server.Client().Do(request)
+			if err != nil {
+				t.Errorf("Failed to send POST request: %v", err)
+				return
+			}
 
-	request, err := http.NewRequest(http.MethodPut, server.URL+"/cars", bytes.NewReader(data))
-	if err != nil {
-		t.Errorf("Failed to create PUT request: %v", err)
-		return
-	}
+			if response.StatusCode != http.StatusOK {
+				t.Errorf("Unexpected status code: %d", response.StatusCode)
+			}
+		}
 
-	request.Header.Set("Content-Type", "application/json")
+		// Assign cars
+		application.Commands.AssignCarsToJourneys.Handle()
 
-	responseAddCars, err := server.Client().Do(request)
-	if err != nil {
-		t.Errorf("Failed to send PUT request: %v", err)
-		return
-	}
+		// Verify journey statuses
+		verifyJourneyStatuses(t, server, initialJourneyVerification)
+	})
 
-	if responseAddCars.StatusCode != http.StatusOK {
-		t.Errorf("Unexpected status code: %d", responseAddCars.StatusCode)
-	}
+	t.Run("Adding additional cars and re-assignment", func(t *testing.T) {
+		// Add additional cars
+		additionalCars := []Car{
+			{6, 4},
+			{7, 5},
+		}
 
-}
+		// Marshal car data
+		data, err := json.Marshal(additionalCars)
+		if err != nil {
+			t.Errorf("Failed to marshal car data: %v", err)
+			return
+		}
 
-func requestEnqueueJourneys(t *testing.T, server *httptest.Server, journey struct {
-	ID     int `json:"id"`
-	People int `json:"people"`
-}) {
-	data, err := json.Marshal(journey)
-	if err != nil {
-		t.Errorf("Failed to marshal journey data: %v", err)
-		return
-	}
+		// Build PUT request for adding additional cars
+		request, err := buildRequest(http.MethodPut, server.URL+"/cars", "application/json", data)
+		if err != nil {
+			t.Errorf("Failed to create PUT request: %v", err)
+			return
+		}
 
-	request, err := http.NewRequest(http.MethodPost, server.URL+"/journey", bytes.NewReader(data))
-	if err != nil {
-		t.Errorf("Failed to create POST request: %v", err)
-		return
-	}
+		// Send PUT request
+		response, err := server.Client().Do(request)
+		if err != nil {
+			t.Errorf("Failed to send PUT request: %v", err)
+			return
+		}
 
-	request.Header.Set("Content-Type", "application/json")
+		// Check PUT request status code
+		if response.StatusCode != http.StatusOK {
+			t.Errorf("Unexpected status code: %d", response.StatusCode)
+		}
 
-	response, err := server.Client().Do(request)
-	if err != nil {
-		t.Errorf("Failed to send POST request: %v", err)
-		return
-	}
+		// Assign cars
+		application.Commands.AssignCarsToJourneys.Handle()
 
-	if response.StatusCode != http.StatusOK {
-		t.Errorf("Unexpected status code: %d", response.StatusCode)
-	}
+		// Verify journey statuses
+		verifyJourneyStatuses(t, server, additionalCarVerification)
+	})
 
-}
+	t.Run("Adding cars and assigning remaining journeys", func(t *testing.T) {
+		// Add remaining cars
+		remainingCars := []Car{{8, 6}}
 
-func verifyJourneyStatus(t *testing.T, server *httptest.Server, id int, statusCode int) {
-	request, err := http.NewRequest(http.MethodPost, server.URL+"/locate", strings.NewReader(fmt.Sprintf("ID=%d", id)))
-	if err != nil {
-		t.Errorf("Failed to create POST request: %v", err)
-		return
-	}
+		// Marshal car data
+		data, err := json.Marshal(remainingCars)
+		if err != nil {
+			t.Errorf("Failed to marshal car data: %v", err)
+			return
+		}
 
-	request.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+		// Build PUT request for adding remaining cars
+		request, err := buildRequest(http.MethodPut, server.URL+"/cars", "application/json", data)
+		if err != nil {
+			t.Errorf("Failed to create PUT request: %v", err)
+			return
+		}
 
-	response, err := server.Client().Do(request)
-	if err != nil {
-		t.Errorf("Failed to send POST request: %v", err)
-		return
-	}
+		// Send PUT request
+		response, err := server.Client().Do(request)
+		if err != nil {
+			t.Errorf("Failed to send PUT request: %v", err)
+			return
+		}
 
-	if response.StatusCode != statusCode {
-		t.Errorf("Unexpected status %d for journey %d, expected %d", response.StatusCode, id, statusCode)
-	}
+		// Check PUT request status code
+		if response.StatusCode != http.StatusOK {
+			t.Errorf("Unexpected status code: %d", response.StatusCode)
+		}
+
+		// Assign cars
+		application.Commands.AssignCarsToJourneys.Handle()
+
+		// Verify journey statuses
+		verifyJourneyStatuses(t, server, remainingCarVerification)
+	})
+
+	t.Run("Drop-off and assigning new journey", func(t *testing.T) {
+		// Define new journey data
+		newJourney := Journey{
+			ID:     8,
+			People: 3,
+		}
+
+		// Drop-off existing journey
+		dropOffJourneyID := 1 // Replace with actual journey ID
+		request, err := buildRequest(http.MethodPost, server.URL+"/dropoff", "application/x-www-form-urlencoded", []byte(fmt.Sprintf("ID=%d", dropOffJourneyID)))
+		if err != nil {
+			t.Errorf("Failed to create POST request: %v", err)
+			return
+		}
+
+		response, err := server.Client().Do(request)
+		if err != nil {
+			t.Errorf("Failed to send POST request: %v", err)
+			return
+		}
+
+		if response.StatusCode != http.StatusNoContent {
+			t.Errorf("Unexpected status code: %d for drop-off", response.StatusCode)
+		}
+
+		// Add new journey
+		data, err := json.Marshal(newJourney)
+		if err != nil {
+			t.Errorf("Failed to marshal journey data: %v", err)
+			return
+		}
+
+		request, err = buildRequest(http.MethodPost, server.URL+"/journey", "application/json", data)
+		if err != nil {
+			t.Errorf("Failed to create POST request: %v", err)
+			return
+		}
+
+		response, err = server.Client().Do(request)
+		if err != nil {
+			t.Errorf("Failed to send POST request: %v", err)
+			return
+		}
+
+		if response.StatusCode != http.StatusOK {
+			t.Errorf("Unexpected status code: %d for new journey", response.StatusCode)
+		}
+
+		// Assign cars
+		application.Commands.AssignCarsToJourneys.Handle()
+
+		updatedVerification := []JourneyVerification{
+			{1, 404},
+			{2, 200},
+			{3, 200},
+			{4, 200},
+			{5, 200},
+			{6, 200},
+			{7, 200},
+			{newJourney.ID, 200},
+		}
+
+		// Verify journey statuses
+		verifyJourneyStatuses(t, server, updatedVerification)
+
+	})
 }
