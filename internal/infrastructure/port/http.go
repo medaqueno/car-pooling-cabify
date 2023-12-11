@@ -1,18 +1,18 @@
-package infra
+package port
 
 import (
-	"car-pooling-service/internal/car_pooling"
-	dto "car-pooling-service/internal/domain"
+	"car-pooling-service/internal"
+	"car-pooling-service/internal/domain/model"
 	"encoding/json"
 	"net/http"
 )
 
 type HTTPHandler struct {
-	app *app.Application
+	app *internal.Application
 }
 
-func NewHTTPHandler(application *app.Application) *HTTPHandler {
-	return &HTTPHandler{app: application}
+func NewHTTPHandler(app *internal.Application) *HTTPHandler {
+	return &HTTPHandler{app: app}
 }
 
 func (h *HTTPHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -62,7 +62,7 @@ func (h *HTTPHandler) handleStatus(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *HTTPHandler) handleAddCars(w http.ResponseWriter, r *http.Request) {
-	var addCarsRequest []dto.AddCarRequest
+	var addCarsRequest []model.AddCarRequest
 
 	err := json.NewDecoder(r.Body).Decode(&addCarsRequest)
 	if err != nil {
@@ -87,7 +87,7 @@ func (h *HTTPHandler) handleAddCars(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *HTTPHandler) handleEnqueueJourney(w http.ResponseWriter, r *http.Request) {
-	var enqueueJourneyRequest dto.EnqueueJourneyRequest
+	var enqueueJourneyRequest model.EnqueueJourneyRequest
 
 	err := json.NewDecoder(r.Body).Decode(&enqueueJourneyRequest)
 	if err != nil {
@@ -110,7 +110,7 @@ func (h *HTTPHandler) handleEnqueueJourney(w http.ResponseWriter, r *http.Reques
 }
 
 func (h *HTTPHandler) handleLocateJourney(w http.ResponseWriter, r *http.Request) {
-	var locateJourneyRequest dto.LocateJourneyRequest
+	var locateJourneyRequest model.LocateJourneyRequest
 
 	if err := locateJourneyRequest.Validate(r); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
@@ -129,7 +129,7 @@ func (h *HTTPHandler) handleLocateJourney(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	carResponse := dto.CarResponse{
+	carResponse := model.CarResponse{
 		ID:             car.ID,
 		Seats:          car.Seats,
 		AvailableSeats: car.AvailableSeats,
@@ -140,7 +140,7 @@ func (h *HTTPHandler) handleLocateJourney(w http.ResponseWriter, r *http.Request
 }
 
 func (h *HTTPHandler) handleDropoff(w http.ResponseWriter, r *http.Request) {
-	var dropoffRequest dto.DropoffRequest
+	var dropoffRequest model.DropoffRequest
 
 	if err := dropoffRequest.Validate(r); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)

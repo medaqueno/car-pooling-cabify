@@ -2,8 +2,8 @@ package tests
 
 import (
 	"bytes"
-	app "car-pooling-service/internal/car_pooling"
-	"car-pooling-service/internal/car_pooling/infra"
+	"car-pooling-service/internal"
+	"car-pooling-service/internal/infrastructure/port"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -58,10 +58,10 @@ func verifyJourneyStatuses(t *testing.T, server *httptest.Server, journeys []Jou
 
 func TestCarAssignmentFlow(t *testing.T) {
 	// Initialize application
-	application := app.InitializeApp()
+	application := internal.InitializeApp()
 
 	// Create HTTP handler and server
-	httpHandler := infra.NewHTTPHandler(application)
+	httpHandler := port.NewHTTPHandler(application)
 	server := httptest.NewServer(httpHandler)
 	defer server.Close()
 
@@ -155,7 +155,7 @@ func TestCarAssignmentFlow(t *testing.T) {
 		}
 
 		// Assign cars
-		application.Commands.AssignCarsToJourneys.Handle()
+		application.Services.AssignCarsToJourneys.Handle()
 
 		// Verify journey statuses
 		verifyJourneyStatuses(t, server, initialJourneyVerification)
@@ -195,7 +195,7 @@ func TestCarAssignmentFlow(t *testing.T) {
 		}
 
 		// Assign cars
-		application.Commands.AssignCarsToJourneys.Handle()
+		application.Services.AssignCarsToJourneys.Handle()
 
 		// Verify journey statuses
 		verifyJourneyStatuses(t, server, additionalCarVerification)
@@ -232,7 +232,7 @@ func TestCarAssignmentFlow(t *testing.T) {
 		}
 
 		// Assign cars
-		application.Commands.AssignCarsToJourneys.Handle()
+		application.Services.AssignCarsToJourneys.Handle()
 
 		// Verify journey statuses
 		verifyJourneyStatuses(t, server, remainingCarVerification)
@@ -287,7 +287,7 @@ func TestCarAssignmentFlow(t *testing.T) {
 		}
 
 		// Assign cars
-		application.Commands.AssignCarsToJourneys.Handle()
+		application.Services.AssignCarsToJourneys.Handle()
 
 		updatedVerification := []JourneyVerification{
 			{1, 404},

@@ -1,78 +1,24 @@
-package adapters
+package memory
 
 import (
-	"car-pooling-service/internal/domain"
+	"car-pooling-service/internal/domain/model"
 	"fmt"
 	"sync"
 	"time"
 )
 
-type InMemoryCarRepository struct {
-	cars  map[int]*dto.Car
-	mutex sync.RWMutex
-}
-
-func NewInMemoryCarRepository() *InMemoryCarRepository {
-	return &InMemoryCarRepository{
-		cars: make(map[int]*dto.Car),
-	}
-}
-
-func (r *InMemoryCarRepository) AddCar(car *dto.Car) error {
-	r.mutex.Lock()
-	defer r.mutex.Unlock()
-
-	if _, exists := r.cars[car.ID]; exists {
-		return fmt.Errorf("car with ID %d already exists", car.ID)
-	}
-
-	r.cars[car.ID] = car
-
-	return nil
-}
-
-func (r *InMemoryCarRepository) GetAllCars() []*dto.Car {
-	var cars []*dto.Car
-	for _, car := range r.cars {
-		cars = append(cars, car)
-	}
-
-	return cars
-}
-
-func (r *InMemoryCarRepository) FindCarByID(carID int) (*dto.Car, error) {
-	r.mutex.RLock()
-	defer r.mutex.RUnlock()
-
-	car, exists := r.cars[carID]
-	if !exists {
-		return nil, fmt.Errorf("no car found with ID %d", carID)
-	}
-
-	return car, nil
-}
-
-func (r *InMemoryCarRepository) LogAllCars() {
-	for _, car := range r.cars {
-		fmt.Printf("Car ID: %d, Seats: %d, Available Seats: %d\n", car.ID, car.Seats, car.AvailableSeats)
-	}
-	fmt.Printf("\n")
-}
-
-/////
-
 type InMemoryJourneyRepository struct {
-	journeys []*dto.Journey
+	journeys []*model.Journey
 	mutex    sync.RWMutex
 }
 
 func NewInMemoryJourneyRepository() *InMemoryJourneyRepository {
 	return &InMemoryJourneyRepository{
-		journeys: []*dto.Journey{},
+		journeys: []*model.Journey{},
 	}
 }
 
-func (r *InMemoryJourneyRepository) EnqueueJourney(journey *dto.Journey) error {
+func (r *InMemoryJourneyRepository) EnqueueJourney(journey *model.Journey) error {
 	r.mutex.Lock()
 	defer r.mutex.Unlock()
 
@@ -87,8 +33,8 @@ func (r *InMemoryJourneyRepository) EnqueueJourney(journey *dto.Journey) error {
 	return nil
 }
 
-func (r *InMemoryJourneyRepository) GetPendingJourneys() []*dto.Journey {
-	var journeys []*dto.Journey
+func (r *InMemoryJourneyRepository) GetPendingJourneys() []*model.Journey {
+	var journeys []*model.Journey
 	for _, journey := range r.journeys {
 		journeys = append(journeys, journey)
 	}
@@ -102,7 +48,7 @@ func (r *InMemoryJourneyRepository) LogAllJourneys() {
 	}
 	fmt.Printf("\n")
 }
-func (r *InMemoryJourneyRepository) FindJourneyByID(journeyID int) (*dto.Journey, error) {
+func (r *InMemoryJourneyRepository) FindJourneyByID(journeyID int) (*model.Journey, error) {
 	r.mutex.RLock()
 	defer r.mutex.RUnlock()
 
@@ -115,7 +61,7 @@ func (r *InMemoryJourneyRepository) FindJourneyByID(journeyID int) (*dto.Journey
 	return nil, fmt.Errorf("no journey found for group ID %d", journeyID)
 }
 
-func (r *InMemoryJourneyRepository) AssignCarToJourney(car *dto.Car, journey *dto.Journey) error {
+func (r *InMemoryJourneyRepository) AssignCarToJourney(car *model.Car, journey *model.Journey) error {
 	r.mutex.Lock()
 	defer r.mutex.Unlock()
 

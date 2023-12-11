@@ -1,8 +1,8 @@
 package command
 
 import (
-	"car-pooling-service/internal/car_pooling/repository"
-	"car-pooling-service/internal/domain"
+	"car-pooling-service/internal/domain/model"
+	"car-pooling-service/internal/domain/repository"
 	"fmt"
 )
 
@@ -16,8 +16,8 @@ func NewEnqueueJourneyHandler(repo repository.JourneyRepository) *EnqueueJourney
 	}
 }
 
-func (h *EnqueueJourneyHandler) Handle(enqueueJourneyRequest dto.EnqueueJourneyRequest) error {
-	journey := dto.NewJourney(enqueueJourneyRequest.ID, enqueueJourneyRequest.People)
+func (h *EnqueueJourneyHandler) Handle(enqueueJourneyRequest model.EnqueueJourneyRequest) error {
+	journey := model.NewJourney(enqueueJourneyRequest.ID, enqueueJourneyRequest.People)
 	err := h.repo.EnqueueJourney(journey)
 	if err != nil {
 		return fmt.Errorf("Error enqueueing journey: %v\n", err)

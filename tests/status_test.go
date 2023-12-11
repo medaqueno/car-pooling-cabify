@@ -1,8 +1,8 @@
 package tests
 
 import (
-	app "car-pooling-service/internal/car_pooling"
-	"car-pooling-service/internal/car_pooling/infra"
+	"car-pooling-service/internal"
+	"car-pooling-service/internal/infrastructure/port"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -10,8 +10,8 @@ import (
 
 func TestGetStatus(t *testing.T) {
 	// Arrange
-	application := app.InitializeApp()
-	httpHandler := infra.NewHTTPHandler(application)
+	application := internal.InitializeApp()
+	httpHandler := port.NewHTTPHandler(application)
 	server := httptest.NewServer(httpHandler)
 	defer server.Close()
 

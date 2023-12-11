@@ -1,8 +1,8 @@
 package command
 
 import (
-	"car-pooling-service/internal/car_pooling/repository"
-	"car-pooling-service/internal/domain"
+	"car-pooling-service/internal/domain/model"
+	"car-pooling-service/internal/domain/repository"
 	"fmt"
 )
 
@@ -16,9 +16,9 @@ func NewAddCarHandler(repo repository.CarRepository) *AddCarHandler {
 	}
 }
 
-func (h *AddCarHandler) Handle(addCarsRequest []dto.AddCarRequest) error {
+func (h *AddCarHandler) Handle(addCarsRequest []model.AddCarRequest) error {
 	for _, carRequest := range addCarsRequest {
-		car := dto.NewCar(carRequest.ID, carRequest.Seats, carRequest.Seats)
+		car := model.NewCar(carRequest.ID, carRequest.Seats, carRequest.Seats)
 		err := h.repo.AddCar(car)
 		if err != nil {
 			fmt.Printf("Error adding car: %v\n", err)

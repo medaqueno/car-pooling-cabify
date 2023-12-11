@@ -34,7 +34,7 @@ build:
 #     DOCKER_DRIVER: overlay2
 #     DOCKER_TLS_CERTDIR: ""
 #     DOCKER_HOST: tcp://docker:2375/
-#   services:
+#   service:
 #     - docker:dind
 #   script:
 #     - echo As a helper here you have a sample of how to build and push a \
@@ -56,4 +56,4 @@ acceptance:
     - name: ${CI_REGISTRY_IMAGE}:latest
       alias: pooling
   script:
-    - /harness --address http://pooling:9091 acceptance
+    - /harness --address port://pooling:9091 acceptance

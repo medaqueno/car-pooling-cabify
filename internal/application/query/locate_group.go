@@ -1,8 +1,8 @@
 package query
 
 import (
-	"car-pooling-service/internal/car_pooling/repository"
-	"car-pooling-service/internal/domain"
+	"car-pooling-service/internal/domain/model"
+	"car-pooling-service/internal/domain/repository"
 	"fmt"
 )
 
@@ -18,7 +18,7 @@ func NewLocateJourneyHandler(carRepo repository.CarRepository, journeyRepo repos
 	}
 }
 
-func (h *LocateCarByJourneyHandler) Handle(groupID int) (*dto.Car, error) {
+func (h *LocateCarByJourneyHandler) Handle(groupID int) (*model.Car, error) {
 	journey, err := h.journeyRepo.FindJourneyByID(groupID)
 	// No Journey
 	if err != nil {
