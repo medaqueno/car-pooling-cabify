@@ -2,6 +2,7 @@ package main
 
 import (
 	"car-pooling-service/internal"
+	"car-pooling-service/internal/infrastructure/config"
 	"car-pooling-service/internal/infrastructure/port"
 	"log"
 	"net/http"
@@ -9,7 +10,14 @@ import (
 )
 
 func main() {
-	// Init App and Configs
+
+	// Init Config
+	cfg, err := config.LoadConfig()
+	if err != nil {
+		log.Fatalf("Failed to load configuration: %v", err)
+	}
+
+	// Init App
 	application := internal.InitializeApp()
 
 	// Init Coroutine to check Journey/Car assigning
@@ -23,8 +31,8 @@ func main() {
 	httpHandler := port.NewHTTPHandler(application)
 
 	// Start HTTP Server
-	log.Println("Starting server on :8080")
-	if err := http.ListenAndServe(":8080", httpHandler); err != nil {
-		log.Fatal("ListenAndServe:", err)
+	log.Printf("Starting server on %s", cfg.ServerPort)
+	if err := http.ListenAndServe(":"+cfg.ServerPort, httpHandler); err != nil {
+		log.Fatalf("ListenAndServe: %v", err)
 	}
 }
