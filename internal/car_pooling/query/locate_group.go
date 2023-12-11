@@ -2,7 +2,7 @@ package query
 
 import (
 	"car-pooling-service/internal/car_pooling/repository"
-	dto "car-pooling-service/internal/domain"
+	"car-pooling-service/internal/domain"
 	"fmt"
 )
 
@@ -11,7 +11,7 @@ type LocateCarByJourneyHandler struct {
 	carRepo     repository.CarRepository
 }
 
-func NewLocateJourneyHandler(journeyRepo repository.JourneyRepository, carRepo repository.CarRepository) *LocateCarByJourneyHandler {
+func NewLocateJourneyHandler(carRepo repository.CarRepository, journeyRepo repository.JourneyRepository) *LocateCarByJourneyHandler {
 	return &LocateCarByJourneyHandler{
 		journeyRepo: journeyRepo,
 		carRepo:     carRepo,

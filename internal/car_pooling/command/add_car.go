@@ -27,7 +27,7 @@ func (h *AddCarHandler) Handle(addCarsRequest []dto.AddCarRequest) error {
 	}
 
 	// Debug
-	h.repo.LogAllCars()
+	// h.repo.LogAllCars()
 
 	return nil
 }

@@ -35,13 +35,19 @@ func (h *HTTPHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
 			return
 		}
-		h.handleAddJourney(w, r)
+		h.handleEnqueueJourney(w, r)
 	case "/locate":
 		if r.Method != http.MethodPost {
 			http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
 			return
 		}
 		h.handleLocateJourney(w, r)
+	case "/dropoff":
+		if r.Method != http.MethodPost {
+			http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
+			return
+		}
+		h.handleDropoff(w, r)
 	default:
 		http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
 	}
@@ -80,21 +86,21 @@ func (h *HTTPHandler) handleAddCars(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 }
 
-func (h *HTTPHandler) handleAddJourney(w http.ResponseWriter, r *http.Request) {
-	var addJourneyRequest dto.AddJourneyRequest
+func (h *HTTPHandler) handleEnqueueJourney(w http.ResponseWriter, r *http.Request) {
+	var enqueueJourneyRequest dto.EnqueueJourneyRequest
 
-	err := json.NewDecoder(r.Body).Decode(&addJourneyRequest)
+	err := json.NewDecoder(r.Body).Decode(&enqueueJourneyRequest)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	if !addJourneyRequest.IsValid() {
+	if !enqueueJourneyRequest.IsValid() {
 		http.Error(w, "Invalid journey request data", http.StatusBadRequest)
 		return
 	}
 
-	err = h.app.Commands.AddJourney.Handle(addJourneyRequest)
+	err = h.app.Commands.EnqueueJourney.Handle(enqueueJourneyRequest)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -123,6 +129,29 @@ func (h *HTTPHandler) handleLocateJourney(w http.ResponseWriter, r *http.Request
 		return
 	}
 
+	carResponse := dto.CarResponse{
+		ID:             car.ID,
+		Seats:          car.Seats,
+		AvailableSeats: car.AvailableSeats,
+	}
+
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(car)
+	json.NewEncoder(w).Encode(carResponse)
+}
+
+func (h *HTTPHandler) handleDropoff(w http.ResponseWriter, r *http.Request) {
+	var dropoffRequest dto.DropoffRequest
+
+	if err := dropoffRequest.Validate(r); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	err := h.app.Commands.Dropoff.Handle(dropoffRequest)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusNotFound)
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
 }

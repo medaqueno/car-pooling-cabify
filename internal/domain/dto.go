@@ -30,7 +30,13 @@ func NewCar(ID int, seats int, availableSeats int) *Car {
 	}
 }
 
-type AddJourneyRequest struct {
+type CarResponse struct {
+	ID             int `json:"id"`
+	Seats          int `json:"seats"`
+	AvailableSeats int `json:"availableSeats"`
+}
+
+type EnqueueJourneyRequest struct {
 	ID     int `json:"id"`
 	People int `json:"people"`
 }
@@ -42,7 +48,7 @@ type Journey struct {
 	WaitingSince time.Time
 }
 
-func (c AddJourneyRequest) IsValid() bool {
+func (c EnqueueJourneyRequest) IsValid() bool {
 	return c.People >= 1 && c.People <= 6
 }
 
@@ -66,12 +72,40 @@ func (r *LocateJourneyRequest) Validate(req *http.Request) error {
 		return fmt.Errorf("bad request")
 	}
 
-	idStr := req.Form.Get("ID")
-	if idStr == "" {
+	journeyID := req.Form.Get("ID")
+	if journeyID == "" {
 		return fmt.Errorf("ID is required")
 	}
 
-	r.ID, err = strconv.Atoi(idStr)
+	r.ID, err = strconv.Atoi(journeyID)
+	if err != nil {
+		return fmt.Errorf("ID must be an integer")
+	}
+
+	if r.ID <= 0 {
+		return fmt.Errorf("ID must be a positive integer")
+	}
+
+	return nil
+}
+
+type DropoffRequest struct {
+	ID int
+}
+
+func (r *DropoffRequest) Validate(req *http.Request) error {
+	err := req.ParseForm()
+
+	if err != nil {
+		return fmt.Errorf("bad request")
+	}
+
+	journeyID := req.Form.Get("ID")
+	if journeyID == "" {
+		return fmt.Errorf("ID is required")
+	}
+
+	r.ID, err = strconv.Atoi(journeyID)
 	if err != nil {
 		return fmt.Errorf("ID must be an integer")
 	}

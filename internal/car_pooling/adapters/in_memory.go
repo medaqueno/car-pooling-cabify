@@ -31,13 +31,25 @@ func (r *InMemoryCarRepository) AddCar(car *dto.Car) error {
 	return nil
 }
 
-func (r *InMemoryCarRepository) getAllCars() []*dto.Car {
+func (r *InMemoryCarRepository) GetAllCars() []*dto.Car {
 	var cars []*dto.Car
 	for _, car := range r.cars {
 		cars = append(cars, car)
 	}
 
 	return cars
+}
+
+func (r *InMemoryCarRepository) FindCarByID(carID int) (*dto.Car, error) {
+	r.mutex.RLock()
+	defer r.mutex.RUnlock()
+
+	car, exists := r.cars[carID]
+	if !exists {
+		return nil, fmt.Errorf("no car found with ID %d", carID)
+	}
+
+	return car, nil
 }
 
 func (r *InMemoryCarRepository) LogAllCars() {
@@ -50,30 +62,32 @@ func (r *InMemoryCarRepository) LogAllCars() {
 /////
 
 type InMemoryJourneyRepository struct {
-	journeys map[int]*dto.Journey
+	journeys []*dto.Journey
 	mutex    sync.RWMutex
 }
 
 func NewInMemoryJourneyRepository() *InMemoryJourneyRepository {
 	return &InMemoryJourneyRepository{
-		journeys: make(map[int]*dto.Journey),
+		journeys: []*dto.Journey{},
 	}
 }
 
-func (r *InMemoryJourneyRepository) AddJourney(journey *dto.Journey) error {
+func (r *InMemoryJourneyRepository) EnqueueJourney(journey *dto.Journey) error {
 	r.mutex.Lock()
 	defer r.mutex.Unlock()
 
-	if _, exists := r.journeys[journey.ID]; exists {
-		return fmt.Errorf("journey with ID %d already exists", journey.ID)
+	for _, j := range r.journeys {
+		if j.ID == journey.ID {
+			return fmt.Errorf("journey with ID %d already exists", journey.ID)
+		}
 	}
 
-	r.journeys[journey.ID] = journey
+	r.journeys = append(r.journeys, journey)
 
 	return nil
 }
 
-func (r *InMemoryJourneyRepository) getAllJourneys() []*dto.Journey {
+func (r *InMemoryJourneyRepository) GetPendingJourneys() []*dto.Journey {
 	var journeys []*dto.Journey
 	for _, journey := range r.journeys {
 		journeys = append(journeys, journey)
@@ -88,27 +102,52 @@ func (r *InMemoryJourneyRepository) LogAllJourneys() {
 	}
 	fmt.Printf("\n")
 }
-
 func (r *InMemoryJourneyRepository) FindJourneyByID(journeyID int) (*dto.Journey, error) {
 	r.mutex.RLock()
 	defer r.mutex.RUnlock()
 
-	journey, exists := r.journeys[journeyID]
-	if !exists {
-		return nil, fmt.Errorf("no journey found for group ID %d", journeyID)
+	for _, journey := range r.journeys {
+		if journey.ID == journeyID {
+			return journey, nil
+		}
 	}
 
-	return journey, nil
+	return nil, fmt.Errorf("no journey found for group ID %d", journeyID)
 }
 
-func (r *InMemoryCarRepository) FindCarByID(carID int) (*dto.Car, error) {
-	r.mutex.RLock()
-	defer r.mutex.RUnlock()
+func (r *InMemoryJourneyRepository) AssignCarToJourney(car *dto.Car, journey *dto.Journey) error {
+	r.mutex.Lock()
+	defer r.mutex.Unlock()
 
-	car, exists := r.cars[carID]
-	if !exists {
-		return nil, fmt.Errorf("no car found with ID %d", carID)
+	for _, existingJourney := range r.journeys {
+		if existingJourney.ID == journey.ID {
+			if existingJourney.CarId != nil {
+				return nil
+			}
+
+			existingJourney.CarId = &car.ID
+			car.AvailableSeats -= journey.People
+			if car.AvailableSeats < 0 {
+				car.AvailableSeats = 0
+			}
+			fmt.Printf("\nAssigned Journey to Car %d\n", existingJourney.ID)
+			return nil
+		}
 	}
 
-	return car, nil
+	return fmt.Errorf("journey with ID %d not found", journey.ID)
+}
+
+func (r *InMemoryJourneyRepository) RemoveJourney(journeyID int) error {
+	r.mutex.Lock()
+	defer r.mutex.Unlock()
+
+	for i, journey := range r.journeys {
+		if journey.ID == journeyID {
+			r.journeys = append(r.journeys[:i], r.journeys[i+1:]...)
+			return nil
+		}
+	}
+
+	return fmt.Errorf("journey with ID %d not found", journeyID)
 }

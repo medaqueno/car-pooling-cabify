@@ -6,25 +6,25 @@ import (
 	"fmt"
 )
 
-type AddJourneyHandler struct {
+type EnqueueJourneyHandler struct {
 	repo repository.JourneyRepository
 }
 
-func NewAddJourneyHandler(repo repository.JourneyRepository) *AddJourneyHandler {
-	return &AddJourneyHandler{
+func NewEnqueueJourneyHandler(repo repository.JourneyRepository) *EnqueueJourneyHandler {
+	return &EnqueueJourneyHandler{
 		repo: repo,
 	}
 }
 
-func (h *AddJourneyHandler) Handle(addJourneyRequest dto.AddJourneyRequest) error {
-	journey := dto.NewJourney(addJourneyRequest.ID, addJourneyRequest.People)
-	err := h.repo.AddJourney(journey)
+func (h *EnqueueJourneyHandler) Handle(enqueueJourneyRequest dto.EnqueueJourneyRequest) error {
+	journey := dto.NewJourney(enqueueJourneyRequest.ID, enqueueJourneyRequest.People)
+	err := h.repo.EnqueueJourney(journey)
 	if err != nil {
-		return fmt.Errorf("Error adding journey: %v\n", err)
+		return fmt.Errorf("Error enqueueing journey: %v\n", err)
 	}
 
 	// Debug
-	h.repo.LogAllJourneys()
+	// h.repo.LogAllJourneys()
 
 	return nil
 }

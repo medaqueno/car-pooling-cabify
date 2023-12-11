@@ -12,8 +12,10 @@ type Application struct {
 }
 
 type Commands struct {
-	AddCar     *command.AddCarHandler
-	AddJourney *command.AddJourneyHandler
+	AddCar               *command.AddCarHandler
+	EnqueueJourney       *command.EnqueueJourneyHandler
+	AssignCarsToJourneys *command.AssignCarsToJourneysHandler
+	Dropoff              *command.DropoffHandler
 }
 
 type Queries struct {
@@ -28,12 +30,14 @@ func InitializeApp() *Application {
 
 	return &Application{
 		Commands: Commands{
-			AddCar:     command.NewAddCarHandler(carRepoImpl),
-			AddJourney: command.NewAddJourneyHandler(journeyRepoImpl),
+			AddCar:               command.NewAddCarHandler(carRepoImpl),
+			EnqueueJourney:       command.NewEnqueueJourneyHandler(journeyRepoImpl),
+			AssignCarsToJourneys: command.NewAssignCarsToJourneysHandler(carRepoImpl, journeyRepoImpl),
+			Dropoff:              command.NewDropoffHandler(carRepoImpl, journeyRepoImpl),
 		},
 		Queries: Queries{
 			Status:        query.NewStatusHandler(),
-			LocateJourney: query.NewLocateJourneyHandler(journeyRepoImpl, carRepoImpl),
+			LocateJourney: query.NewLocateJourneyHandler(carRepoImpl, journeyRepoImpl),
 		},
 	}
 }
