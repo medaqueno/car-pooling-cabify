@@ -1,0 +1,133 @@
+openapi: 3.0.0
+info:
+  title: Car Pooling Service API
+  version: 1.0.0
+  description: API for managing car pooling services.
+
+servers:
+  - url: http://localhost:8080
+    description: Local server
+
+paths:
+  /cars:
+    put:
+      summary: Add a new car
+      description: Add a new car to the car pool.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/AddCarRequest'
+      responses:
+        '200':
+          description: Car added successfully
+        '400':
+          description: Invalid request data
+
+  /journey:
+    post:
+      summary: Enqueue a new journey
+      description: Add a new journey request to the queue.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EnqueueJourneyRequest'
+      responses:
+        '200':
+          description: Journey enqueued successfully
+        '400':
+          description: Invalid journey request data
+
+  /locate:
+    post:
+      summary: Locate a car for a journey
+      description: Locate a car assigned to a specific journey.
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              properties:
+                id:
+                  type: string
+              required:
+                - id
+      responses:
+        '200':
+          description: Car located successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CarResponse'
+        '400':
+          description: Invalid request
+        '404':
+          description: Car not found
+
+  /dropoff:
+    post:
+      summary: Drop off a journey
+      description: Mark a journey as completed and drop off the passengers.
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              properties:
+                id:
+                  type: string
+              required:
+                - id
+      responses:
+        '204':
+          description: Journey dropped off successfully
+        '400':
+          description: Invalid request
+        '404':
+          description: Journey not found
+
+components:
+  schemas:
+    AddCarRequest:
+      type: object
+      required:
+        - id
+        - seats
+      properties:
+        id:
+          type: integer
+          format: int32
+        seats:
+          type: integer
+          format: int32
+
+    EnqueueJourneyRequest:
+      type: object
+      required:
+        - id
+        - people
+      properties:
+        id:
+          type: integer
+          format: int32
+        people:
+          type: integer
+          format: int32
+
+
+    CarResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int32
+        seats:
+          type: integer
+          format: int32
