@@ -6,7 +6,6 @@ import (
 	"car-pooling-service/internal/infrastructure/port"
 	"log"
 	"net/http"
-	"time"
 )
 
 func main() {
@@ -21,12 +20,7 @@ func main() {
 	application := internal.InitializeApp()
 
 	// Init Coroutine to check Journey/Car assigning
-	go func() {
-		for {
-			application.Services.AssignCarsToJourneys.Handle()
-			time.Sleep(time.Second * 5)
-		}
-	}()
+	application.Services.CarAssigner.RunAssignmentProcess()
 
 	httpHandler := port.NewHTTPHandler(application)
 

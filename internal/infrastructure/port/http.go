@@ -130,9 +130,8 @@ func (h *HTTPHandler) handleLocateJourney(w http.ResponseWriter, r *http.Request
 	}
 
 	carResponse := model.CarResponse{
-		ID:             car.ID,
-		Seats:          car.Seats,
-		AvailableSeats: car.AvailableSeats,
+		ID:    car.ID,
+		Seats: car.Seats,
 	}
 
 	w.Header().Set("Content-Type", "application/json")

@@ -7,20 +7,11 @@ import (
 	"time"
 )
 
-type EnqueueJourneyRequest struct {
-	ID     int `json:"id"`
-	People int `json:"people"`
-}
-
 type Journey struct {
 	ID           int
 	People       int
 	CarId        *int
 	WaitingSince time.Time
-}
-
-func (c EnqueueJourneyRequest) IsValid() bool {
-	return c.People >= 1 && c.People <= 6
 }
 
 func NewJourney(ID int, people int) *Journey {
@@ -30,6 +21,15 @@ func NewJourney(ID int, people int) *Journey {
 		CarId:        nil,
 		WaitingSince: time.Now(),
 	}
+}
+
+type EnqueueJourneyRequest struct {
+	ID     int `json:"id"`
+	People int `json:"people"`
+}
+
+func (c EnqueueJourneyRequest) IsValid() bool {
+	return c.People >= 1 && c.People <= 6
 }
 
 type LocateJourneyRequest struct {

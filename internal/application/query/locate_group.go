@@ -18,8 +18,8 @@ func NewLocateJourneyHandler(carRepo repository.CarRepository, journeyRepo repos
 	}
 }
 
-func (h *LocateCarByJourneyHandler) Handle(groupID int) (*model.Car, error) {
-	journey, err := h.journeyRepo.FindJourneyByID(groupID)
+func (h *LocateCarByJourneyHandler) Handle(journeyID int) (*model.Car, error) {
+	journey, err := h.journeyRepo.FindJourneyByID(journeyID)
 	// No Journey
 	if err != nil {
 		fmt.Printf("No Journey Found\n")
@@ -35,7 +35,7 @@ func (h *LocateCarByJourneyHandler) Handle(groupID int) (*model.Car, error) {
 	car, err := h.carRepo.FindCarByID(*journey.CarId)
 	// Car does not exist
 	if err != nil {
-		fmt.Printf("Car does not exist\n")
+		fmt.Printf("Car does not exist when locating journey\n")
 		return nil, err
 	}
 
