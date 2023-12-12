@@ -2,8 +2,8 @@ package command
 
 import (
 	"car-pooling-service/internal/application/service"
-	"car-pooling-service/internal/domain/model"
 	"car-pooling-service/internal/domain/repository"
+	"car-pooling-service/internal/port/http/dto"
 	"fmt"
 )
 
@@ -21,7 +21,7 @@ func NewDropoffHandler(carRepo repository.CarRepository, journeyRepo repository.
 	}
 }
 
-func (h *DropoffHandler) Handle(dropoffRequest model.DropoffRequest) error {
+func (h *DropoffHandler) Handle(dropoffRequest dto.DropoffRequest) error {
 	journey, err := h.journeyRepo.FindJourneyByID(dropoffRequest.ID)
 	if err != nil {
 		return fmt.Errorf("error finding journey: %v", err)

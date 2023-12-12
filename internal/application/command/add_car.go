@@ -4,6 +4,7 @@ import (
 	"car-pooling-service/internal/application/service"
 	"car-pooling-service/internal/domain/model"
 	"car-pooling-service/internal/domain/repository"
+	"car-pooling-service/internal/port/http/dto"
 	"fmt"
 )
 
@@ -19,7 +20,7 @@ func NewAddCarHandler(repo repository.CarRepository, assignerService *service.Ca
 	}
 }
 
-func (h *AddCarHandler) Handle(addCarsRequest []model.AddCarRequest) error {
+func (h *AddCarHandler) Handle(addCarsRequest []dto.AddCarRequest) error {
 	for _, carRequest := range addCarsRequest {
 		car := model.NewCar(carRequest.ID, carRequest.Seats)
 
@@ -33,6 +34,6 @@ func (h *AddCarHandler) Handle(addCarsRequest []model.AddCarRequest) error {
 		// Add car to the corresponding AvailabilityQueue
 		h.assignerService.AddCarToQueue(car)
 	}
-	
+
 	return nil
 }

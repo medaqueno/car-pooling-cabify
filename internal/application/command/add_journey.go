@@ -3,6 +3,7 @@ package command
 import (
 	"car-pooling-service/internal/domain/model"
 	"car-pooling-service/internal/domain/repository"
+	"car-pooling-service/internal/port/http/dto"
 	"fmt"
 )
 
@@ -16,7 +17,7 @@ func NewEnqueueJourneyHandler(repo repository.JourneyRepository) *EnqueueJourney
 	}
 }
 
-func (h *EnqueueJourneyHandler) Handle(enqueueJourneyRequest model.EnqueueJourneyRequest) error {
+func (h *EnqueueJourneyHandler) Handle(enqueueJourneyRequest dto.EnqueueJourneyRequest) error {
 
 	journey := model.NewJourney(enqueueJourneyRequest.ID, enqueueJourneyRequest.People)
 	err := h.repo.EnqueueJourney(journey)

@@ -3,7 +3,7 @@ package tests
 import (
 	"bytes"
 	"car-pooling-service/internal"
-	"car-pooling-service/internal/infrastructure/port"
+	http2 "car-pooling-service/internal/port/http"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -61,7 +61,7 @@ func TestCarAssignmentFlow(t *testing.T) {
 	application := internal.InitializeApp()
 
 	// Create HTTP handler and server
-	httpHandler := port.NewHTTPHandler(application)
+	httpHandler := http2.NewHTTPHandler(application)
 	server := httptest.NewServer(httpHandler)
 	defer server.Close()
 

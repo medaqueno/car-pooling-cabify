@@ -3,7 +3,7 @@ package main
 import (
 	"car-pooling-service/internal"
 	"car-pooling-service/internal/infrastructure/config"
-	"car-pooling-service/internal/infrastructure/port"
+	http2 "car-pooling-service/internal/port/http"
 	"log"
 	"net/http"
 )
@@ -22,7 +22,7 @@ func main() {
 	// Init Coroutine to check Journey/Car assigning
 	application.Services.CarAssigner.RunAssignmentProcess()
 
-	httpHandler := port.NewHTTPHandler(application)
+	httpHandler := http2.NewHTTPHandler(application)
 
 	// Start HTTP Server
 	log.Printf("Starting server on %s", cfg.ServerPort)

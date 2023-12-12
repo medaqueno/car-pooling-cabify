@@ -1,8 +1,8 @@
-package port
+package http
 
 import (
 	"car-pooling-service/internal"
-	"car-pooling-service/internal/domain/model"
+	"car-pooling-service/internal/port/http/dto"
 	"encoding/json"
 	"net/http"
 )
@@ -62,7 +62,7 @@ func (h *HTTPHandler) handleStatus(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *HTTPHandler) handleAddCars(w http.ResponseWriter, r *http.Request) {
-	var addCarsRequest []model.AddCarRequest
+	var addCarsRequest []dto.AddCarRequest
 
 	err := json.NewDecoder(r.Body).Decode(&addCarsRequest)
 	if err != nil {
@@ -87,7 +87,7 @@ func (h *HTTPHandler) handleAddCars(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *HTTPHandler) handleEnqueueJourney(w http.ResponseWriter, r *http.Request) {
-	var enqueueJourneyRequest model.EnqueueJourneyRequest
+	var enqueueJourneyRequest dto.EnqueueJourneyRequest
 
 	err := json.NewDecoder(r.Body).Decode(&enqueueJourneyRequest)
 	if err != nil {
@@ -110,7 +110,7 @@ func (h *HTTPHandler) handleEnqueueJourney(w http.ResponseWriter, r *http.Reques
 }
 
 func (h *HTTPHandler) handleLocateJourney(w http.ResponseWriter, r *http.Request) {
-	var locateJourneyRequest model.LocateJourneyRequest
+	var locateJourneyRequest dto.LocateJourneyRequest
 
 	if err := locateJourneyRequest.Validate(r); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
@@ -129,7 +129,7 @@ func (h *HTTPHandler) handleLocateJourney(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	carResponse := model.CarResponse{
+	carResponse := dto.CarResponse{
 		ID:    car.ID,
 		Seats: car.Seats,
 	}
@@ -139,7 +139,7 @@ func (h *HTTPHandler) handleLocateJourney(w http.ResponseWriter, r *http.Request
 }
 
 func (h *HTTPHandler) handleDropoff(w http.ResponseWriter, r *http.Request) {
-	var dropoffRequest model.DropoffRequest
+	var dropoffRequest dto.DropoffRequest
 
 	if err := dropoffRequest.Validate(r); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
