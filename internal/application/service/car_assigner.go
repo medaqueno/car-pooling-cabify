@@ -18,16 +18,11 @@ type CarAssignerService struct {
 	mu          sync.Mutex
 }
 
-func NewCarAssignerService(carRepo repository.CarRepository, journeyRepo repository.JourneyRepository, queueCount int) *CarAssignerService {
-	queues := make([][]int, queueCount)
-	for i := range queues {
-		queues[i] = make([]int, 0)
-	}
-
+func NewCarAssignerService(carRepo repository.CarRepository, journeyRepo repository.JourneyRepository) *CarAssignerService {
 	return &CarAssignerService{
 		carRepo:     carRepo,
 		journeyRepo: journeyRepo,
-		queues:      queues,
+		queues:      make([][]int, 0),
 	}
 }
 
@@ -106,7 +101,16 @@ func (s *CarAssignerService) AddCarToQueue(car *model.Car) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	queueIndex := car.Seats // Assuming this represents the number of AVAILABLE seats
+	queueIndex := car.Seats
+
+	// Check if queue exists, if it does not, create it.
+	// It exists to make AvailabilityQueues dynamic, may be it could be "cached"
+	if queueIndex >= len(s.queues) {
+		for i := len(s.queues); i <= queueIndex; i++ {
+			s.queues = append(s.queues, []int{})
+		}
+	}
+
 	s.queues[queueIndex] = append(s.queues[queueIndex], car.ID)
 	car.InQueue = queueIndex
 

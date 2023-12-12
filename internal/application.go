@@ -32,7 +32,7 @@ func InitializeApp() *Application {
 	// Prepare dependencies to be injected
 	carRepoImpl := memory.NewCarRepository()
 	journeyRepoImpl := memory.NewJourneyRepository()
-	carAssignerService := service.NewCarAssignerService(carRepoImpl, journeyRepoImpl, 7) // TODO: CHECK this
+	carAssignerService := service.NewCarAssignerService(carRepoImpl, journeyRepoImpl)
 
 	return &Application{
 		Commands: Commands{
