@@ -15,11 +15,6 @@ func (c AddCarRequest) IsValid() bool {
 	return c.Seats >= 4 && c.Seats <= 6
 }
 
-type CarResponse struct {
-	ID    int `json:"id"`
-	Seats int `json:"seats"`
-}
-
 type EnqueueJourneyRequest struct {
 	ID     int `json:"id"`
 	People int `json:"people"`
