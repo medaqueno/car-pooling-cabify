@@ -10,7 +10,7 @@ type AppConfig struct {
 // LoadConfig loads the application configuration from environment variables
 func LoadConfig() (*AppConfig, error) {
 	config := AppConfig{
-		ServerPort: getEnv("SERVER_PORT", "8080"),
+		ServerPort: getEnv("SERVER_PORT", "9091"),
 		LogLevel:   getEnv("LOG_LEVEL", "info"),
 	}
 

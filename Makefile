@@ -4,7 +4,7 @@
 # Licence MIT
 
 # Variables
-# UNAME		:= $(shell uname -s)
+UNAME		:= $(shell uname -s)
 
 .EXPORT_ALL_VARIABLES:
 

@@ -3,27 +3,17 @@ stages:
   - docker
   - acceptance
 
-remove_me:
-  stage: build
-  script:
-  - >
-     echo If you can see this you know that gitlab-ci is running.  You should
-     uncomment the sections that enable building the docker image and running
-     the acceptance tests.
-     Change any file as necessary to make tests pass in your language of
-     choice.  But be mindful that we will only accept challenges that are
-     passing acceptance.  Good luck!
-
 ## Uncomment the following sections to enable docker, image building and
 ## acceptance
 
 build:
   stage: build
-  image: car-pooling-challenge
+  image: golang:1.21-alpine3.19
   artifacts:
     paths:
       - bin/
   script:
+    - echo Working...
     - CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o bin/car-pooling-challenge cmd/main.go
 
 build_image:
@@ -41,7 +31,8 @@ build_image:
     - echo ${CI_JOB_TOKEN} | docker login --password-stdin -u ${CI_REGISTRY_USER} ${CI_REGISTRY}
     - docker build . -t ${CI_REGISTRY_IMAGE}:latest
     - docker push ${CI_REGISTRY_IMAGE}:latest
-
+  dependencies:
+      - build
 ## Uncomment the acceptance step and do not remove or edit, this step is
 ## required for us to accept your submission!
 

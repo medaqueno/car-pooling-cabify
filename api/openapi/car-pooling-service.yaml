@@ -5,7 +5,7 @@ info:
   description: API for managing car pooling services.
 
 servers:
-  - url: http://localhost:8080
+  - url: http://localhost:9091
     description: Local server
 
 paths:
