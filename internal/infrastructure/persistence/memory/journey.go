@@ -40,6 +40,9 @@ func (r *JourneyRepositoryImpl) DequeueJourney(journeyID int) error {
 func (r *JourneyRepositoryImpl) UpdateJourney(journey *model.Journey) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
+	if _, exists := r.journeys[journey.ID]; !exists {
+		return errors.New("journey not found")
+	}
 	r.journeys[journey.ID] = journey
 	return nil
 }
