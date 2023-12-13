@@ -22,7 +22,7 @@ func NewCarAssignerService(carRepo repository.CarRepository, journeyRepo reposit
 	return &CarAssignerService{
 		carRepo:     carRepo,
 		journeyRepo: journeyRepo,
-		queues:      make([][]int, 0),
+		queues:      make([][]int, 7),
 	}
 }
 
@@ -46,31 +46,32 @@ func (s *CarAssignerService) AssignCarsToJourneys() {
 		return
 	}
 
-	// s.PrintAllQueues()
+	// PrintJourneys(waitingJourneys)
 
 	for _, journey := range waitingJourneys {
 		assigned := s.tryAssignCarToJourney(journey)
 		if !assigned {
 			// If we couldn't assign a car, the journey remains in the waiting list.
-			// Consider adding logic for handling long-waiting journeys.
+			// This is a good place to add logic for handling long-waiting journeys if we had Business Requirements
 		}
 	}
+
+	// s.PrintAllQueues()
 }
 
 func (s *CarAssignerService) tryAssignCarToJourney(journey *model.Journey) bool {
-
 	for seatsAvailable := journey.People; seatsAvailable < len(s.queues); seatsAvailable++ {
 		if len(s.queues[seatsAvailable]) > 0 {
-
 			// Found a car with enough seats
-			carID := s.queues[seatsAvailable][0]                    // Get the first car in the queue
-			s.queues[seatsAvailable] = s.queues[seatsAvailable][1:] // Remove the car from the queue
+			carID := s.queues[seatsAvailable][0] // Get the first car in the queue
 
 			car, err := s.carRepo.FindCarByID(carID)
 			if err != nil {
 				log.Printf("Error finding car: %v", err)
-				continue
+				return false
 			}
+
+			s.queues[seatsAvailable] = s.queues[seatsAvailable][1:] // Remove the car from the queue
 
 			// Update journey with the car's ID
 			journey.CarId = &carID
@@ -91,6 +92,9 @@ func (s *CarAssignerService) tryAssignCarToJourney(journey *model.Journey) bool 
 				return false
 			}
 
+			// log.Printf("Journey %d with %d people is assigned carID: %d that had %d seats, seatsNowAvailable: %d\n",
+			//	journey.ID, journey.People, carID, car.Seats, seatsNowAvailable)
+
 			return true
 		}
 	}
@@ -102,14 +106,6 @@ func (s *CarAssignerService) AddCarToQueue(car *model.Car) {
 	defer s.mu.Unlock()
 
 	queueIndex := car.Seats
-
-	// Check if queue exists, if it does not, create it.
-	// It exists to make AvailabilityQueues dynamic, may be it could be "cached"
-	if queueIndex >= len(s.queues) {
-		for i := len(s.queues); i <= queueIndex; i++ {
-			s.queues = append(s.queues, []int{})
-		}
-	}
 
 	s.queues[queueIndex] = append(s.queues[queueIndex], car.ID)
 	car.InQueue = queueIndex
@@ -144,7 +140,6 @@ func (s *CarAssignerService) MoveCarToQueue(car *model.Car, journey *model.Journ
 	}
 }
 
-// Helper function to remove a car from a queue
 func removeCarFromQueue(queue []int, carID int) []int {
 	for i, id := range queue {
 		if id == carID {
@@ -160,9 +155,16 @@ func (s *CarAssignerService) PrintAllQueues() {
 		fmt.Printf("Queue %d: , length: %d ", queueIndex, len(queue))
 		fmt.Printf("| CarIDs:")
 		for _, carID := range queue {
-			fmt.Printf("%d ", carID)
+			fmt.Printf("%d", carID)
 		}
 		fmt.Println() // Newline for each queue
 	}
 	fmt.Println()
+}
+
+func PrintJourneys(journeys []*model.Journey) {
+	for _, journey := range journeys {
+		fmt.Printf("Journey ID: %d, People: %d, Waiting Since: %s\n",
+			journey.ID, journey.People, journey.WaitingSince.Format(time.RFC3339))
+	}
 }
