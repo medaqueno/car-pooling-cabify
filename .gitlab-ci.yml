@@ -23,8 +23,8 @@ build_image:
     DOCKER_DRIVER: overlay2
     DOCKER_TLS_CERTDIR: ""
     DOCKER_HOST: tcp://docker:2375/
-#  service:
-#    - docker:dind
+  services:
+    - docker:dind
   script:
     - echo As a helper here you have a sample of how to build and push a \
       docker image to the provided gitlab registry.
