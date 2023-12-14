@@ -8,10 +8,10 @@ import (
 )
 
 type EnqueueJourneyHandler struct {
-	repo repository.JourneyRepository
+	repo repository.CarAssignerRepository
 }
 
-func NewEnqueueJourneyHandler(repo repository.JourneyRepository) *EnqueueJourneyHandler {
+func NewEnqueueJourneyHandler(repo repository.CarAssignerRepository) *EnqueueJourneyHandler {
 	return &EnqueueJourneyHandler{
 		repo: repo,
 	}

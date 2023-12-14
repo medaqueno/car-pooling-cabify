@@ -2,27 +2,161 @@ package memory
 
 import (
 	"car-pooling-service/internal/domain/model"
-	"car-pooling-service/internal/domain/repository"
+	"container/heap"
+	"errors"
 	"fmt"
 	"log"
 	"sync"
-	"time"
 )
 
-type CarAssignerImpl struct {
-	carRepo     repository.CarRepository
-	journeyRepo repository.JourneyRepository
-	queues      [][]int // Each index represents the number of available seats
-	mu          sync.Mutex
+type JourneyQueue []*model.Journey
+
+func (jq JourneyQueue) Len() int { return len(jq) }
+func (jq JourneyQueue) Less(i, j int) bool {
+	// First journeys to enter in queue first. FIFO-like
+	return jq[i].WaitingSince.Before(jq[j].WaitingSince)
+}
+func (jq JourneyQueue) Swap(i, j int) { jq[i], jq[j] = jq[j], jq[i] }
+
+func (jq *JourneyQueue) Push(x interface{}) {
+	item := x.(*model.Journey)
+	*jq = append(*jq, item)
 }
 
-func NewCarAssignerRepository(carRepo repository.CarRepository, journeyRepo repository.JourneyRepository) *CarAssignerImpl {
+func (jq *JourneyQueue) Pop() interface{} {
+	old := *jq
+	n := len(old)
+	item := old[n-1]
+	*jq = old[0 : n-1]
+	return item
+}
+
+type CarAssignerImpl struct {
+	cars     map[int]*model.Car
+	journeys JourneyQueue
+	queues   [][]int // Each index represents the number of available seats
+	mu       sync.Mutex
+}
+
+func NewCarAssignerRepository() *CarAssignerImpl {
 	return &CarAssignerImpl{
-		carRepo:     carRepo,
-		journeyRepo: journeyRepo,
-		queues:      make([][]int, 7), // Depends on Business Invariants -> Max Car Size + 1
+		cars:     make(map[int]*model.Car),
+		journeys: make(JourneyQueue, 0),
+		queues:   make([][]int, 7), // Depends on Business Invariants -> Max Car Size + 1
 	}
 }
+
+// Car
+func (s *CarAssignerImpl) AddCar(car *model.Car) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if _, exists := s.cars[car.ID]; exists {
+		return fmt.Errorf("car with ID %d already exists", car.ID)
+	}
+	s.cars[car.ID] = car
+	log.Printf("Add car: %d with %d\n", car.ID, car.Seats)
+
+	err := s.addCarToQueue(car)
+	if err != nil {
+		return fmt.Errorf("%v", err)
+	}
+
+	return nil
+}
+
+func (s *CarAssignerImpl) addCarToQueue(car *model.Car) error {
+	queueIndex := car.Seats
+
+	s.queues[queueIndex] = append(s.queues[queueIndex], car.ID)
+	car.InQueue = queueIndex
+
+	// Update InQueue change in Car
+	err := s.updateCar(car)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (s *CarAssignerImpl) updateCar(car *model.Car) error {
+	if _, exists := s.cars[car.ID]; !exists {
+		return fmt.Errorf("car with ID %d not found", car.ID)
+	}
+	s.cars[car.ID] = car
+	return nil
+}
+
+func (s *CarAssignerImpl) EnqueueJourney(journey *model.Journey) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	heap.Push(&s.journeys, journey)
+	log.Printf("Add Journey: %d with %d\n", journey.ID, journey.People)
+	return nil
+}
+
+func (s *CarAssignerImpl) FindJourneyByID(journeyID int) (*model.Journey, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	for _, journey := range s.journeys {
+		if journey.ID == journeyID {
+			return journey, nil
+		}
+	}
+	return nil, fmt.Errorf("journey not found") // Journey not found
+}
+
+func (s *CarAssignerImpl) FindCarByJourneyID(journeyID int) (*model.Car, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	for _, journey := range s.journeys {
+		if journey.ID == journeyID {
+			if journey.CarId == nil {
+				return nil, nil // No car assigned yet
+			}
+			return s.FindCarByID(*journey.CarId)
+		}
+	}
+
+	return nil, fmt.Errorf("journey not found") // Journey not found
+}
+
+func (s *CarAssignerImpl) FindCarByID(carID int) (*model.Car, error) {
+	if car, exists := s.cars[carID]; exists {
+		return car, nil
+	}
+
+	return nil, fmt.Errorf("no car found with ID %d", carID)
+}
+
+func (s *CarAssignerImpl) DequeueJourney(journeyID int) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	/*if journey.CarId != nil {
+		car, err := h.repo.FindCarByID(*journey.CarId)
+		if err != nil {
+			return fmt.Errorf("error finding car for journey: %v", err)
+		}
+		// h.repo.MoveCarToQueue(car, journey)
+
+		
+	}
+	*/
+	for i, journey := range s.journeys {
+		if journey.ID == journeyID {
+			s.journeys.Swap(i, s.journeys.Len()-1)
+			s.journeys = s.journeys[:s.journeys.Len()-1]
+			heap.Init(&s.journeys)
+			return nil
+		}
+	}
+
+	return errors.New("journey not found")
+}
+
+/*
+
 
 func (s *CarAssignerImpl) AssignCarsToJourneys() {
 	s.mu.Lock()
@@ -156,3 +290,4 @@ func PrintJourneys(journeys []*model.Journey) {
 			journey.ID, journey.People, journey.WaitingSince.Format(time.RFC3339))
 	}
 }
+*/

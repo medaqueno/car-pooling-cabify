@@ -129,11 +129,13 @@ func (h *HTTPHandler) handleLocateJourney(w http.ResponseWriter, r *http.Request
 
 	car, err := h.app.Queries.LocateJourney.Handle(locateJourneyRequest.ID)
 	if err != nil {
+		// Journey not found
 		w.WriteHeader(http.StatusNotFound)
 		return
 	}
 
 	if car == nil {
+		// No car assigned to the journey yet
 		w.WriteHeader(http.StatusNoContent)
 		return
 	}

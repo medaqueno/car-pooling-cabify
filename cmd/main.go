@@ -20,12 +20,12 @@ func main() {
 	application := internal.InitializeApp()
 
 	// Init Coroutine to check Journey/Car assigning
-	go func() {
+	/*go func() {
 		for {
 			application.Services.CarAssigner.Handle()
 		}
 	}()
-
+	*/
 	httpHandler := httpPort.NewHTTPHandler(application)
 
 	// Start HTTP Server

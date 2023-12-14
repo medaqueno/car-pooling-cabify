@@ -1,13 +1,6 @@
 package memory
 
-import (
-	"car-pooling-service/internal/domain/model"
-	"container/heap"
-	"errors"
-	"fmt"
-	"sync"
-)
-
+/*
 type JourneyQueue []*model.Journey
 
 func (jq JourneyQueue) Len() int { return len(jq) }
@@ -105,3 +98,4 @@ func (repo *JourneyRepositoryImpl) FindJourneyByID(journeyID int) (*model.Journe
 
 	return nil, fmt.Errorf("journey not found")
 }
+*/

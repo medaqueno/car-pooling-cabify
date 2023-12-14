@@ -1,11 +1,6 @@
 package memory
 
-import (
-	"car-pooling-service/internal/domain/model"
-	"fmt"
-	"sync"
-)
-
+/*
 type CarRepositoryImpl struct {
 	cars map[int]*model.Car
 	mu   sync.Mutex
@@ -48,3 +43,4 @@ func (repo *CarRepositoryImpl) UpdateCar(car *model.Car) error {
 	repo.cars[car.ID] = car
 	return nil
 }
+*/

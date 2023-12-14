@@ -3,7 +3,6 @@ package internal
 import (
 	"car-pooling-service/internal/application/command"
 	"car-pooling-service/internal/application/query"
-	"car-pooling-service/internal/application/service"
 	"car-pooling-service/internal/infrastructure/persistence/memory"
 )
 
@@ -25,27 +24,44 @@ type Queries struct {
 }
 
 type Services struct {
-	CarAssigner *service.CarAssignerHandler
+	// CarAssigner *service.CarAssignerHandler
 }
 
 func InitializeApp() *Application {
 	// Prepare dependencies to be injected
-	carRepoImpl := memory.NewCarRepository()
-	journeyRepoImpl := memory.NewJourneyRepository()
-	carAssignerRepoImpl := memory.NewCarAssignerRepository(carRepoImpl, journeyRepoImpl)
+	carAssignerRepoImpl := memory.NewCarAssignerRepository()
 
 	return &Application{
 		Commands: Commands{
-			AddCar:         command.NewAddCarHandler(carRepoImpl, carAssignerRepoImpl),
-			EnqueueJourney: command.NewEnqueueJourneyHandler(journeyRepoImpl),
-			Dropoff:        command.NewDropoffHandler(carRepoImpl, journeyRepoImpl, carAssignerRepoImpl),
+			AddCar:         command.NewAddCarHandler(carAssignerRepoImpl),
+			EnqueueJourney: command.NewEnqueueJourneyHandler(carAssignerRepoImpl),
+			Dropoff:        command.NewDropoffHandler(carAssignerRepoImpl),
 		},
 		Queries: Queries{
 			Status:        query.NewStatusHandler(),
-			LocateJourney: query.NewLocateJourneyHandler(carRepoImpl, journeyRepoImpl),
+			LocateJourney: query.NewLocateJourneyHandler(carAssignerRepoImpl),
 		},
-		Services: Services{
-			CarAssigner: service.NewCarAssignerHandler(carAssignerRepoImpl),
-		},
+		Services: Services{},
 	}
+	/*
+
+		carRepoImpl := memory.NewCarRepository()
+		journeyRepoImpl := memory.NewJourneyRepository()
+
+
+		return &Application{
+			Commands: Commands{
+				AddCar:         command.NewAddCarHandler(carRepoImpl, carAssignerRepoImpl),
+				EnqueueJourney: command.NewEnqueueJourneyHandler(journeyRepoImpl),
+				Dropoff:        command.NewDropoffHandler(carRepoImpl, journeyRepoImpl, carAssignerRepoImpl),
+			},
+			Queries: Queries{
+				Status:        query.NewStatusHandler(),
+				LocateJourney: query.NewLocateJourneyHandler(carRepoImpl, journeyRepoImpl),
+			},
+			Services: Services{
+				CarAssigner: service.NewCarAssignerHandler(carAssignerRepoImpl),
+			},
+		}
+	*/
 }

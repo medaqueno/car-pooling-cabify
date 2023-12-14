@@ -38,7 +38,7 @@ paths:
             schema:
               $ref: '#/components/schemas/EnqueueJourneyRequest'
       responses:
-        '200':
+        '202':
           description: Journey enqueued successfully
         '400':
           description: Invalid journey request data
