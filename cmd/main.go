@@ -3,9 +3,10 @@ package main
 import (
 	"car-pooling-service/internal"
 	"car-pooling-service/internal/infrastructure/config"
-	http2 "car-pooling-service/internal/port/http"
+	httpPort "car-pooling-service/internal/port/http"
 	"log"
 	"net/http"
+	"time"
 )
 
 func main() {
@@ -20,9 +21,14 @@ func main() {
 	application := internal.InitializeApp()
 
 	// Init Coroutine to check Journey/Car assigning
-	application.Services.CarAssigner.RunAssignmentProcess()
+	go func() {
+		for {
+			application.Services.CarAssigner.Handle()
+			time.Sleep(time.Duration(cfg.CheckCarAssignInterval) * time.Millisecond)
+		}
+	}()
 
-	httpHandler := http2.NewHTTPHandler(application)
+	httpHandler := httpPort.NewHTTPHandler(application)
 
 	// Start HTTP Server
 	log.Printf("Starting server on %s", cfg.ServerPort)

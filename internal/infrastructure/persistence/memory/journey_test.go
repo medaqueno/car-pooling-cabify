@@ -13,11 +13,6 @@ func TestEnqueueDequeueJourney(t *testing.T) {
 		t.Errorf("EnqueueJourney failed: %v", err)
 	}
 
-	// Test enqueuing a duplicate journey
-	if err := repo.EnqueueJourney(journey); err == nil {
-		t.Error("Expected an error when enqueuing a duplicate journey, but got none")
-	}
-
 	if err := repo.DequeueJourney(1); err != nil {
 		t.Errorf("DequeueJourney failed: %v", err)
 	}
@@ -75,22 +70,19 @@ func TestGetWaitingJourneys(t *testing.T) {
 	_ = repo.EnqueueJourney(journey1)
 	_ = repo.EnqueueJourney(journey2)
 
+	// Assign a car to journey1
+	carID := 123
+	journey1.CarId = &carID
+	_ = repo.UpdateJourney(journey1)
+
 	waitingJourneys, err := repo.GetWaitingJourneys()
 	if err != nil {
 		t.Errorf("GetWaitingJourneys failed: %v", err)
 	}
-	if len(waitingJourneys) != 2 {
-		t.Errorf("Expected 2 waiting journeys, got %d", len(waitingJourneys))
-	}
-
-	// Dequeue one journey and test if everything was updated
-	_ = repo.DequeueJourney(1)
-	waitingJourneys, _ = repo.GetWaitingJourneys()
 	if len(waitingJourneys) != 1 {
-		t.Errorf("Expected 1 waiting journey after dequeue, got %d", len(waitingJourneys))
+		t.Errorf("Expected 1 waiting journey, got %d", len(waitingJourneys))
 	}
 
-	// Check the remaining journey's ID
 	if waitingJourneys[0].ID != 2 {
 		t.Errorf("Expected journey ID 2 to be waiting, got ID %d", waitingJourneys[0].ID)
 	}

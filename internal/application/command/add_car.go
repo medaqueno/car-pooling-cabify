@@ -1,7 +1,6 @@
 package command
 
 import (
-	"car-pooling-service/internal/application/service"
 	"car-pooling-service/internal/domain/model"
 	"car-pooling-service/internal/domain/repository"
 	"car-pooling-service/internal/port/http/dto"
@@ -9,14 +8,14 @@ import (
 )
 
 type AddCarHandler struct {
-	repo            repository.CarRepository
-	assignerService *service.CarAssignerService
+	repo                  repository.CarRepository
+	carAssignerRepository repository.CarAssignerRepository
 }
 
-func NewAddCarHandler(repo repository.CarRepository, assignerService *service.CarAssignerService) *AddCarHandler {
+func NewAddCarHandler(repo repository.CarRepository, carAssignerRepository repository.CarAssignerRepository) *AddCarHandler {
 	return &AddCarHandler{
-		repo:            repo,
-		assignerService: assignerService,
+		repo:                  repo,
+		carAssignerRepository: carAssignerRepository,
 	}
 }
 
@@ -32,7 +31,7 @@ func (h *AddCarHandler) Handle(addCarsRequest []dto.AddCarRequest) error {
 		}
 
 		// Add car to the corresponding AvailabilityQueue
-		h.assignerService.AddCarToQueue(car)
+		h.carAssignerRepository.AddCarToQueue(car)
 	}
 
 	return nil

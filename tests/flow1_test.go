@@ -155,7 +155,7 @@ func TestCarAssignmentFlow(t *testing.T) {
 		}
 
 		// Assign cars
-		application.Services.CarAssigner.AssignCarsToJourneys()
+		application.Services.CarAssigner.Handle()
 
 		// Verify journey statuses
 		verifyJourneyStatuses(t, server, initialJourneyVerification)
@@ -195,7 +195,7 @@ func TestCarAssignmentFlow(t *testing.T) {
 		}
 
 		// Assign cars
-		application.Services.CarAssigner.AssignCarsToJourneys()
+		application.Services.CarAssigner.Handle()
 
 		// Verify journey statuses
 		verifyJourneyStatuses(t, server, additionalCarVerification)
@@ -234,7 +234,7 @@ func TestCarAssignmentFlow(t *testing.T) {
 		}
 
 		// Assign cars
-		application.Services.CarAssigner.AssignCarsToJourneys()
+		application.Services.CarAssigner.Handle()
 
 		// Verify journey statuses
 		verifyJourneyStatuses(t, server, remainingCarVerification)
@@ -289,7 +289,7 @@ func TestCarAssignmentFlow(t *testing.T) {
 		}
 
 		// Assign cars
-		application.Services.CarAssigner.AssignCarsToJourneys()
+		application.Services.CarAssigner.Handle()
 		/*
 			updatedVerification := []JourneyVerification{
 				{1, 404},

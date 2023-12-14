@@ -4,6 +4,7 @@ import (
 	"car-pooling-service/internal/domain/model"
 	"container/heap"
 	"errors"
+	"fmt"
 	"sync"
 )
 
@@ -40,22 +41,22 @@ func NewJourneyRepository() *JourneyRepositoryImpl {
 	}
 }
 
-func (r *JourneyRepositoryImpl) EnqueueJourney(journey *model.Journey) error {
-	r.mu.Lock()
-	defer r.mu.Unlock()
-	heap.Push(&r.journeys, journey)
+func (repo *JourneyRepositoryImpl) EnqueueJourney(journey *model.Journey) error {
+	repo.mu.Lock()
+	defer repo.mu.Unlock()
+	heap.Push(&repo.journeys, journey)
 	return nil
 }
 
-func (r *JourneyRepositoryImpl) DequeueJourney(journeyID int) error {
-	r.mu.Lock()
-	defer r.mu.Unlock()
+func (repo *JourneyRepositoryImpl) DequeueJourney(journeyID int) error {
+	repo.mu.Lock()
+	defer repo.mu.Unlock()
 
-	for i, journey := range r.journeys {
+	for i, journey := range repo.journeys {
 		if journey.ID == journeyID {
-			r.journeys.Swap(i, r.journeys.Len()-1)
-			r.journeys = r.journeys[:r.journeys.Len()-1]
-			heap.Init(&r.journeys)
+			repo.journeys.Swap(i, repo.journeys.Len()-1)
+			repo.journeys = repo.journeys[:repo.journeys.Len()-1]
+			heap.Init(&repo.journeys)
 			return nil
 		}
 	}
@@ -63,12 +64,12 @@ func (r *JourneyRepositoryImpl) DequeueJourney(journeyID int) error {
 	return errors.New("journey not found")
 }
 
-func (r *JourneyRepositoryImpl) GetWaitingJourneys() ([]*model.Journey, error) {
-	r.mu.Lock()
-	defer r.mu.Unlock()
+func (repo *JourneyRepositoryImpl) GetWaitingJourneys() ([]*model.Journey, error) {
+	repo.mu.Lock()
+	defer repo.mu.Unlock()
 
 	var waitingJourneys []*model.Journey
-	for _, journey := range r.journeys {
+	for _, journey := range repo.journeys {
 		if journey.CarId == nil {
 			waitingJourneys = append(waitingJourneys, journey)
 		}
@@ -76,13 +77,13 @@ func (r *JourneyRepositoryImpl) GetWaitingJourneys() ([]*model.Journey, error) {
 	return waitingJourneys, nil
 }
 
-func (r *JourneyRepositoryImpl) UpdateJourney(updatedJourney *model.Journey) error {
-	r.mu.Lock()
-	defer r.mu.Unlock()
+func (repo *JourneyRepositoryImpl) UpdateJourney(updatedJourney *model.Journey) error {
+	repo.mu.Lock()
+	defer repo.mu.Unlock()
 
-	for i, journey := range r.journeys {
+	for i, journey := range repo.journeys {
 		if journey.ID == updatedJourney.ID {
-			r.journeys[i] = updatedJourney
+			repo.journeys[i] = updatedJourney
 
 			// No need to re-init Heap because we modified a non-ordered attribute
 			return nil
@@ -92,15 +93,15 @@ func (r *JourneyRepositoryImpl) UpdateJourney(updatedJourney *model.Journey) err
 	return errors.New("journey not found")
 }
 
-func (r *JourneyRepositoryImpl) FindJourneyByID(journeyID int) (*model.Journey, error) {
-	r.mu.Lock()
-	defer r.mu.Unlock()
+func (repo *JourneyRepositoryImpl) FindJourneyByID(journeyID int) (*model.Journey, error) {
+	repo.mu.Lock()
+	defer repo.mu.Unlock()
 
-	for _, journey := range r.journeys {
+	for _, journey := range repo.journeys {
 		if journey.ID == journeyID {
 			return journey, nil
 		}
 	}
 
-	return nil, errors.New("journey not found")
+	return nil, fmt.Errorf("journey not found")
 }

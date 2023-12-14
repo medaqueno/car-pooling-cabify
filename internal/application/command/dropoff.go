@@ -1,23 +1,22 @@
 package command
 
 import (
-	"car-pooling-service/internal/application/service"
 	"car-pooling-service/internal/domain/repository"
 	"car-pooling-service/internal/port/http/dto"
 	"fmt"
 )
 
 type DropoffHandler struct {
-	carRepo         repository.CarRepository
-	journeyRepo     repository.JourneyRepository
-	assignerService *service.CarAssignerService
+	carRepo               repository.CarRepository
+	journeyRepo           repository.JourneyRepository
+	carAssignerRepository repository.CarAssignerRepository
 }
 
-func NewDropoffHandler(carRepo repository.CarRepository, journeyRepo repository.JourneyRepository, assignerService *service.CarAssignerService) *DropoffHandler {
+func NewDropoffHandler(carRepo repository.CarRepository, journeyRepo repository.JourneyRepository, carAssignerRepository repository.CarAssignerRepository) *DropoffHandler {
 	return &DropoffHandler{
-		carRepo:         carRepo,
-		journeyRepo:     journeyRepo,
-		assignerService: assignerService,
+		carRepo:               carRepo,
+		journeyRepo:           journeyRepo,
+		carAssignerRepository: carAssignerRepository,
 	}
 }
 
@@ -32,7 +31,7 @@ func (h *DropoffHandler) Handle(dropoffRequest dto.DropoffRequest) error {
 		if err != nil {
 			return fmt.Errorf("error finding car for journey: %v", err)
 		}
-		h.assignerService.MoveCarToQueue(car, journey)
+		h.carAssignerRepository.MoveCarToQueue(car, journey)
 	}
 
 	err = h.journeyRepo.DequeueJourney(journey.ID)

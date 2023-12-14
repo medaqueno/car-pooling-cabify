@@ -25,27 +25,27 @@ type Queries struct {
 }
 
 type Services struct {
-	CarAssigner *service.CarAssignerService
+	CarAssigner *service.CarAssignerHandler
 }
 
 func InitializeApp() *Application {
 	// Prepare dependencies to be injected
 	carRepoImpl := memory.NewCarRepository()
 	journeyRepoImpl := memory.NewJourneyRepository()
-	carAssignerService := service.NewCarAssignerService(carRepoImpl, journeyRepoImpl)
+	carAssignerRepoImpl := memory.NewCarAssignerRepository(carRepoImpl, journeyRepoImpl)
 
 	return &Application{
 		Commands: Commands{
-			AddCar:         command.NewAddCarHandler(carRepoImpl, carAssignerService),
+			AddCar:         command.NewAddCarHandler(carRepoImpl, carAssignerRepoImpl),
 			EnqueueJourney: command.NewEnqueueJourneyHandler(journeyRepoImpl),
-			Dropoff:        command.NewDropoffHandler(carRepoImpl, journeyRepoImpl, carAssignerService),
+			Dropoff:        command.NewDropoffHandler(carRepoImpl, journeyRepoImpl, carAssignerRepoImpl),
 		},
 		Queries: Queries{
 			Status:        query.NewStatusHandler(),
 			LocateJourney: query.NewLocateJourneyHandler(carRepoImpl, journeyRepoImpl),
 		},
 		Services: Services{
-			CarAssigner: carAssignerService,
+			CarAssigner: service.NewCarAssignerHandler(carAssignerRepoImpl),
 		},
 	}
 }
