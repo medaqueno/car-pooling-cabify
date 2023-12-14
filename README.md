@@ -218,3 +218,144 @@ following survey:
 - https://forms.gle/EzPeURspTCLG1q9T7
 
 Your participation is really important. Thanks for your contribution!
+
+# Development and decision documentation
+
+# Key Architectural Decisions
+This car pooling is designed to efficiently manage and assign cars to groups of people, taking as priorities the separation of concern, a focus on scalability and maintainability and simplicity of code. Patterns like CQRS, Ports and Adapters makes easy to follow the principles of clean architecture architecture.
+
+
+## CQRS and Ports/Adapters
+Both are well known patterns that make easy to understand and maintain codebases in the long time. This approach enhances performance and scalability, ensuring clarity in functionality and single responsibility in each component and allows to grow separately as the project needs evolve.
+
+## Repositories
+The use of repository interfaces abstracts the data storage mechanism, providing flexibility and simplifying data access. This pattern enhances testability and maintainability, allowing for easy mocking of data storage in tests and encapsulating data access logic.
+
+## Minimal External Dependencies
+As a project requirement, it is assumed that besides reducing dependencies on third parties. External dependencies may be always analysed and added only in case where they provide real value to development, balancing performance, community suuport, ease of use and coupling.
+
+## Foundation for Future Architectural Patterns:
+While the current implementation is straightforward, it writes the path for adopting more complex architectural patterns like event-driven or reactive architectures.
+
+In such architectures, the car assignment process could be triggered by events (e.g., a new journey request or a car becoming available), further optimizing resource usage and responsiveness.
+
+# App flow
+
+## Car Assignment logic
+
+### Assumptions: Business Invariants
+1.  **Vehicle Capacity:** Cars have a defined number of available seats that vary (4, 5, or 6 seats).
+2.  **Group Size:** Groups of people can range from 1 to 6 individuals.
+3.  **Grouping in Vehicles:** People in the same group must travel together in the same vehicle.
+4.  **Car Assignment:** A group can only be assigned to a vehicle if there are enough empty seats available for the entire group.
+5. **Car Sharing** A group may share the one car with other group if there are available seats on it.
+6.  **No Car Reassignment:** Once a group has been assigned to a vehicle and has begun their journey, they cannot be transferred to another vehicle.
+7.  **Order of Arrival:** Groups should be served as quickly as possible, maintaining the order of arrival when feasible.
+
+### Independent process
+Car assignment is managed by a dedicated coroutine, `CarAssignerHandler`, which operates independently of the main request-handling logic.
+
+**Scalability and Isolation:** The coroutine operates independently of the main request-handling logic, which means that the car assignment process does not directly impact the responsiveness of the user-facing API.
+
+This isolation makes it easier to scale different parts of the system independently. For instance, if the assignment logic becomes a bottleneck, we can opt to a different infrastructure where it can be moved to a separate service or pod,  without major changes to the rest of the system.
+
+**Controlled Throttling and Efficiency:**  
+By running the logic in a separate process, you gain control over how frequently the system checks for and assigns cars to waiting journeys. This throttling mechanism allows for balancing between responsiveness and resource utilization.
+
+It avoids the overhead and potential performance bottlenecks of triggering assignments on every incoming request, which can be particularly beneficial under high load.
+
+**Concurrency and In-Memory Data Storage**  
+In-memory repositories are used for data storage, aligning with the requirement to avoid external databases. This choice simplifies the architecture and is suitable for scenarios where persistence across restarts is not a primary concern.
+
+Concurrency is managed using mutexes (`sync.Mutex`) in repository implementations. This ensures thread-safe operations and maintains data integrity in a multi-threaded environment. This repository pattern allow to easily swap to another systems.
+
+
+
+### Flow process
+**AddCar:**
+
+1. Add car items to CarsCollection.
+2. Push car to AvailabilityQueueN.
+
+```mermaid  
+sequenceDiagram   
+    participant AddCar   
+    participant CarsCollection   
+    participant AvailabilityQueueN1   
+    AddCar ->> CarsCollection: 1. Add Car item   
+    AddCar ->> AvailabilityQueueN1: 2. Add Car item  
+```  
+
+**EnqueueJourney:**
+
+1. Add Journey item to JourneysCollection Heap ordered by WaitingSince Attribute.
+```mermaid  
+sequenceDiagram   
+    participant EnqueueJourney   
+    participant JourneysCollection   
+    EnqueueJourney ->> JourneysCollection: Add Journey item  
+```  
+
+**LocateJourney:**
+
+1. Search Journey in JourneysCollection O(1) to retrieve CarID.
+2. Search Car in CarsCollection O(1).
+```mermaid  
+sequenceDiagram  
+ participant LocateJourney 
+ participant JourneysCollection 
+ participant CarsCollection  
+ LocateJourney ->> JourneysCollection: 1. Retrieve Car ID by Journey ID 
+ LocateJourney ->> CarsCollection: 2. Retrieve by Car ID  
+```  
+
+**AssignCarJourney:**
+
+1. Search Car in AvailabilityQueueN where N is the number of people in the group.
+2. Pop the first Car with enough space from AvailabilityQueueN.
+3. Push Car into the AvailabilityQueueN with new available seats.
+4. Update carID attribute in Journey O(1).
+```mermaid  
+sequenceDiagram  
+ participant CarAssigner 
+ participant JourneysCollection 
+ participant AvailabilityQueueN2    
+ participant AvailabilityQueueN1  
+  
+ CarAssigner ->> AvailabilityQueueN1: 1. Remove Car 
+ CarAssigner ->> AvailabilityQueueN2: 2. Push Car 
+ CarAssigner ->> JourneysCollection: 3. Update Car ID  
+```  
+
+**Dropoff/Dequeue Journey:**
+
+1. Remove Journey from JourneysCollection O(1).
+2. Pop Car item from AvailabilityQueueN.
+3. Push Car to AvailabilityQueueN.
+```mermaid  
+sequenceDiagram  
+ participant Dropoff 
+ participant JourneysCollection 
+ participant AvailabilityQueueN2    
+ participant AvailabilityQueueN1  
+  
+ Dropoff ->> JourneysCollection: 1. Remove Journey    
+ Dropoff ->> AvailabilityQueueN2: 2. Remove Car  
+ AvailabilityQueueN2 ->> AvailabilityQueueN1: 3. Push Car  
+```  
+
+### Data Structures Benefits
+Three main storages are created:
+- **CarRepository**  
+  **Structure Type**: Map  
+  Direct mapping through IDs so we get 0(1) access complexity facilitating data retrieval and manipulation.
+- **JourneyRepository**  
+  **Structure Type**: Heap  
+  Heap structure maintains journeys ordered by `WaitingSince` attribute, so **F**irst groups **I**n are **F**irst groups **O**ut  
+  Not as fast as a regular Priority Queue allows as removing any element from the storage whatever its position with O(log n) efficient for a frequently updated collection.
+- **Queues (AvailabilityQueues)**  
+  **Structure Type**: Array of Maps  
+  Each queue corresponds to a specific car capacity (e.g., 4 seats avail, 5 seats avail), allowing efficient matching of cars to journey groups based on size.  
+  Direct mapping O(1), allows easy and fast access to elements to be updated or moved from one queues to other avoiding iteration throgh a full set of Cars and checking ther capacity one by one on each assignment.  
+  As there are no business requirements with an special order different from assign available seats, this structure do not need to maintain an strict order.  
+  This structure choice aligns business requirements and can be easily extended or reduced with more or less queues or even make them dynamic.
