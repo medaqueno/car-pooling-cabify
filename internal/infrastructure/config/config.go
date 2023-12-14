@@ -16,7 +16,7 @@ func LoadConfig() (*AppConfig, error) {
 	config := AppConfig{
 		ServerPort:             getEnv("SERVER_PORT", "9091"),
 		LogLevel:               getEnv("LOG_LEVEL", "info"),
-		CheckCarAssignInterval: getEnvAsInt("CHECK_ASSIGN_INTERVAL", 2000),
+		CheckCarAssignInterval: getEnvAsInt("CHECK_ASSIGN_INTERVAL", 5),
 	}
 
 	return &config, nil

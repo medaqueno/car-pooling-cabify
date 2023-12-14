@@ -64,9 +64,14 @@ func (h *HTTPHandler) handleStatus(w http.ResponseWriter, r *http.Request) {
 func (h *HTTPHandler) handleAddCars(w http.ResponseWriter, r *http.Request) {
 	var addCarsRequest []dto.AddCarRequest
 
+	if r.Header.Get("Content-Type") != "application/json" {
+		http.Error(w, "", http.StatusUnsupportedMediaType)
+		return
+	}
+
 	err := json.NewDecoder(r.Body).Decode(&addCarsRequest)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		http.Error(w, "", http.StatusBadRequest)
 		return
 	}
 
@@ -79,7 +84,7 @@ func (h *HTTPHandler) handleAddCars(w http.ResponseWriter, r *http.Request) {
 
 	err = h.app.Commands.AddCar.Handle(addCarsRequest)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(w, "", http.StatusInternalServerError)
 		return
 	}
 
@@ -89,9 +94,14 @@ func (h *HTTPHandler) handleAddCars(w http.ResponseWriter, r *http.Request) {
 func (h *HTTPHandler) handleEnqueueJourney(w http.ResponseWriter, r *http.Request) {
 	var enqueueJourneyRequest dto.EnqueueJourneyRequest
 
+	if r.Header.Get("Content-Type") != "application/json" {
+		http.Error(w, "", http.StatusUnsupportedMediaType)
+		return
+	}
+
 	err := json.NewDecoder(r.Body).Decode(&enqueueJourneyRequest)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		http.Error(w, "", http.StatusBadRequest)
 		return
 	}
 
@@ -102,24 +112,24 @@ func (h *HTTPHandler) handleEnqueueJourney(w http.ResponseWriter, r *http.Reques
 
 	err = h.app.Commands.EnqueueJourney.Handle(enqueueJourneyRequest)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(w, "", http.StatusInternalServerError)
 		return
 	}
 
-	w.WriteHeader(http.StatusOK)
+	w.WriteHeader(http.StatusAccepted)
 }
 
 func (h *HTTPHandler) handleLocateJourney(w http.ResponseWriter, r *http.Request) {
 	var locateJourneyRequest dto.LocateJourneyRequest
 
 	if err := locateJourneyRequest.Validate(r); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		http.Error(w, "", http.StatusBadRequest)
 		return
 	}
 
 	car, err := h.app.Queries.LocateJourney.Handle(locateJourneyRequest.ID)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusNotFound)
+		http.Error(w, "", http.StatusNotFound)
 		return
 	}
 
@@ -142,13 +152,13 @@ func (h *HTTPHandler) handleDropoff(w http.ResponseWriter, r *http.Request) {
 	var dropoffRequest dto.DropoffRequest
 
 	if err := dropoffRequest.Validate(r); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		http.Error(w, "", http.StatusBadRequest)
 		return
 	}
 
 	err := h.app.Commands.Dropoff.Handle(dropoffRequest)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusNotFound)
+		http.Error(w, "", http.StatusNotFound)
 		return
 	}
 
