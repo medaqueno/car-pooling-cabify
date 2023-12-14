@@ -6,7 +6,6 @@ import (
 	httpPort "car-pooling-service/internal/port/http"
 	"log"
 	"net/http"
-	"time"
 )
 
 func main() {
@@ -24,7 +23,6 @@ func main() {
 	go func() {
 		for {
 			application.Services.CarAssigner.Handle()
-			time.Sleep(time.Duration(cfg.CheckCarAssignInterval) * time.Millisecond)
 		}
 	}()
 

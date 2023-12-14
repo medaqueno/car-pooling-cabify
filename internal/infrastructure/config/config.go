@@ -6,17 +6,15 @@ import (
 )
 
 type AppConfig struct {
-	ServerPort             string
-	LogLevel               string
-	CheckCarAssignInterval int // Milliseconds
+	ServerPort string
+	LogLevel   string
 }
 
 // LoadConfig loads the application configuration from environment variables
 func LoadConfig() (*AppConfig, error) {
 	config := AppConfig{
-		ServerPort:             getEnv("SERVER_PORT", "9091"),
-		LogLevel:               getEnv("LOG_LEVEL", "info"),
-		CheckCarAssignInterval: getEnvAsInt("CHECK_ASSIGN_INTERVAL", 5),
+		ServerPort: getEnv("SERVER_PORT", "9091"),
+		LogLevel:   getEnv("LOG_LEVEL", "info"),
 	}
 
 	return &config, nil
