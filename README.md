@@ -219,7 +219,7 @@ following survey:
 
 Your participation is really important. Thanks for your contribution!
 
-# Development and decision documentation
+# Development and decision documentation <a id="dev-doc" name="dev-doc"></a>
 
 # Key Architectural Decisions
 This car pooling is designed to efficiently manage and assign cars to groups of people, taking as priorities the separation of concern, a focus on scalability and maintainability and simplicity of code. Patterns like CQRS, Ports and Adapters makes easy to follow the principles of clean architecture architecture.
@@ -239,7 +239,7 @@ While the current implementation is straightforward, it writes the path for adop
 
 In such architectures, the car assignment process could be triggered by events (e.g., a new journey request or a car becoming available), further optimizing resource usage and responsiveness.
 
-# App flow
+# App flow <a id="app-flow" name="app-flow"></a>
 
 ## Car Assignment logic
 
@@ -356,6 +356,10 @@ Three main storages are created:
 - **Queues (AvailabilityQueues)**  
   **Structure Type**: Array of Maps  
   Each queue corresponds to a specific car capacity (e.g., 4 seats avail, 5 seats avail), allowing efficient matching of cars to journey groups based on size.  
-  Direct mapping O(1), allows easy and fast access to elements to be updated or moved from one queues to other avoiding iteration throgh a full set of Cars and checking ther capacity one by one on each assignment.  
+  Direct mapping O(1), allows easy and fast access to elements to be updated or moved from one queues to other avoiding iteration through a full set of Cars and checking their capacity one by one on each assignment.  
   As there are no business requirements with an special order different from assign available seats, this structure do not need to maintain an strict order.  
   This structure choice aligns business requirements and can be easily extended or reduced with more or less queues or even make them dynamic.
+
+## OpenApi Specs <a id="openapi-specs" name="openapi-specs"></a>
+
+[Link to OpenAPI specification](./api/openapi/car-pooling-service.yaml)
