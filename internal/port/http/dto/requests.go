@@ -1,7 +1,7 @@
 package dto
 
 import (
-	"fmt"
+	"car-pooling-service/internal/errors"
 	"net/http"
 	"strconv"
 )
@@ -30,23 +30,22 @@ type LocateJourneyRequest struct {
 
 func (r *LocateJourneyRequest) Validate(req *http.Request) error {
 	err := req.ParseForm()
-
 	if err != nil {
-		return fmt.Errorf("bad request")
+		return errors.ErrGenericBadReq
 	}
 
 	journeyID := req.Form.Get("ID")
 	if journeyID == "" {
-		return fmt.Errorf("ID is required")
+		return errors.ErrIDRequired
 	}
 
 	r.ID, err = strconv.Atoi(journeyID)
 	if err != nil {
-		return fmt.Errorf("ID must be an integer")
+		return errors.ErrInvalidID
 	}
 
 	if r.ID <= 0 {
-		return fmt.Errorf("ID must be a positive integer")
+		return errors.ErrIDPositive
 	}
 
 	return nil
@@ -58,23 +57,22 @@ type DropoffRequest struct {
 
 func (r *DropoffRequest) Validate(req *http.Request) error {
 	err := req.ParseForm()
-
 	if err != nil {
-		return fmt.Errorf("bad request")
+		return errors.ErrGenericBadReq
 	}
 
 	journeyID := req.Form.Get("ID")
 	if journeyID == "" {
-		return fmt.Errorf("ID is required")
+		return errors.ErrIDRequired
 	}
 
 	r.ID, err = strconv.Atoi(journeyID)
 	if err != nil {
-		return fmt.Errorf("ID must be an integer")
+		return errors.ErrInvalidID
 	}
 
 	if r.ID <= 0 {
-		return fmt.Errorf("ID must be a positive integer")
+		return errors.ErrIDPositive
 	}
 
 	return nil
