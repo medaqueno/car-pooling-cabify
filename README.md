@@ -365,3 +365,29 @@ Three main storages are created:
 ## OpenApi Specs <a id="openapi-specs" name="openapi-specs"></a>
 
 [Link to OpenAPI specification](./api/openapi/car-pooling-service.yaml)
+
+## WIP: Installation guide (not part of final documentation)
+To make the development process easier, I have installed "Air". You can start the application by running the command **"$(go env GOPATH)/bin/air"** after executing "air init" and modifying ".air.toml" with the following lines:
+
+```toml
+cmd = "go build -o ./tmp/main ./cmd/main.go"
+exclude_dir = ["assets", "tmp", "vendor", "testdata", "bin"]
+```
+
+To create a binary for Linux Alpine in Mac, execute the following command:
+
+```bash
+CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o bin/car-pooling-challenge cmd/main.go
+```
+
+After creating the binary, build the Docker image using the following command:
+
+```bash
+docker build -t car-pooling-challenge:latest .
+```
+
+Finally, run the Docker container using the following command:
+
+```bash
+docker run -p 9091:9091 car-pooling-challenge:latest
+```
