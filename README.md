@@ -55,15 +55,6 @@ CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o bin/car-pooling-challenge cmd/
 ```
 
 ### Building the Docker Image
-**Understanding the Dockerfile**
-
-The Dockerfile is used to define the steps necessary to create a Docker image for your application. It consists of several commands:
-
-    FROM: Specifies the base image from which you are building.
-    RUN: Executes a command in the container.
-    COPY: Copies files or directories from your host to the container.
-    EXPOSE: Informs Docker that the container listens on the specified network ports at runtime.
-    ENTRYPOINT: Specifies the default executable for the container.
 
 **Docker Build Commands**
 
