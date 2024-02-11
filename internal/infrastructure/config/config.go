@@ -6,15 +6,17 @@ import (
 )
 
 type AppConfig struct {
-	ServerPort string
-	LogLevel   string
+	ServerPort     string
+	LogLevel       string
+	AppEnvironment string
 }
 
 // LoadConfig loads the application configuration from environment variables
 func LoadConfig() (*AppConfig, error) {
 	config := AppConfig{
-		ServerPort: getEnv("SERVER_PORT", "9091"),
-		LogLevel:   getEnv("LOG_LEVEL", "info"),
+		ServerPort:     getEnv("SERVER_PORT", "9091"),
+		LogLevel:       getEnv("LOG_LEVEL", "info"),
+		AppEnvironment: getEnv("APP_ENVIRONMENT", "unknown"),
 	}
 
 	return &config, nil

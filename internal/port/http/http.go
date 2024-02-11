@@ -4,6 +4,7 @@ import (
 	"car-pooling-service/internal"
 	"car-pooling-service/internal/port/http/dto"
 	"encoding/json"
+	"log"
 	"net/http"
 )
 
@@ -145,7 +146,9 @@ func (h *HTTPHandler) handleLocateJourney(w http.ResponseWriter, r *http.Request
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(carResponse)
+	if err := json.NewEncoder(w).Encode(carResponse); err != nil {
+		log.Printf("Error encoding response: %v", err)
+	}
 }
 
 func (h *HTTPHandler) handleDropoff(w http.ResponseWriter, r *http.Request) {

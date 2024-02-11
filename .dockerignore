@@ -1,0 +1,18 @@
+# Exclude directories that do not need to be copied into the Docker build context
+**/tmp
+**/bin
+**/tests
+*.log
+
+# Version control related files and directories
+.git
+.gitignore
+
+# Environment-specific configuration files and documentation
+*.md
+*.yml
+Makefile
+
+# Ignore compiled and test files
+**/*_test.go
+**/main

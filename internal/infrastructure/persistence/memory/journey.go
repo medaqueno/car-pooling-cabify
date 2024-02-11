@@ -10,12 +10,12 @@ import (
 
 type JourneyQueue []*model.Journey
 
-func (jq JourneyQueue) Len() int { return len(jq) }
-func (jq JourneyQueue) Less(i, j int) bool {
+func (jq *JourneyQueue) Len() int { return len(*jq) }
+func (jq *JourneyQueue) Less(i, j int) bool {
 	// First journeys to enter in queue first. FIFO-like
-	return jq[i].WaitingSince.Before(jq[j].WaitingSince)
+	return (*jq)[i].WaitingSince.Before((*jq)[j].WaitingSince)
 }
-func (jq JourneyQueue) Swap(i, j int) { jq[i], jq[j] = jq[j], jq[i] }
+func (jq *JourneyQueue) Swap(i, j int) { (*jq)[i], (*jq)[j] = (*jq)[j], (*jq)[i] }
 
 func (jq *JourneyQueue) Push(x interface{}) {
 	item := x.(*model.Journey)
