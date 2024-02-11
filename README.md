@@ -1,6 +1,94 @@
-[Proposed Solution](#dev-doc)
+# Index
+1. [Getting Started](#getting-started)
+2. [Car Pool Challenge](#car-pooling-service-challenge)
+3. [Proposed Solution](#proposed-solution-and-decision-documentation)
 
-# Car Pooling Service Challenge
+
+# Getting Started [↑](#index)
+
+This guide will help you set up your development environment, build, and run the Go application. It includes instructions for live reloading with Air and creating binaries for multi-platform support.
+
+## Prerequisites
+
+Ensure you have the following installed:
+
+- Go programming language
+- Docker for building and running containerized applications
+- Air for live reloading in development (optional). See https://github.com/cosmtrek/air
+
+## Development Setup
+### Setting Up Live Reloading with Air
+
+Install "Air" to facilitate live reloading during development:
+
+```shell
+go get -u github.com/cosmtrek/air
+```
+
+Initialize Air configuration:
+
+
+```shell
+$(go env GOPATH)/bin/air init
+```
+
+Modify the `.air.toml` configuration file with the following settings to exclude certain directories and set the command to build the application:
+
+```toml
+cmd = "go build -o ./tmp/main ./cmd/main.go"
+exclude_dir = ["assets", "tmp", "vendor", "testdata", "bin"]
+```
+
+To start the application with live reloading, run:
+
+```shell
+$(go env GOPATH)/bin/air
+```
+
+## Building the Application
+### Creating a Binary for Alpine Linux on Mac
+
+To create a binary that is compatible with Alpine Linux (useful for Docker containers), execute the following command in your terminal:
+
+```shell
+CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o bin/car-pooling-challenge cmd/main.go
+```
+
+### Building the Docker Image
+**Understanding the Dockerfile**
+
+The Dockerfile is used to define the steps necessary to create a Docker image for your application. It consists of several commands:
+
+    FROM: Specifies the base image from which you are building.
+    RUN: Executes a command in the container.
+    COPY: Copies files or directories from your host to the container.
+    EXPOSE: Informs Docker that the container listens on the specified network ports at runtime.
+    ENTRYPOINT: Specifies the default executable for the container.
+
+**Docker Build Commands**
+
+After creating the binary, you can build the Docker image with:
+
+```shell
+docker build -t car-pooling-challenge:latest .
+```
+For multi-platform environments (e.g., when you're working on a Mac M1 chip but deploying to an amd64 architecture), use Docker Buildx:
+
+```shell
+docker buildx build --platform linux/amd64,linux/arm64 -t car-pooling-challenge:latest .
+```
+
+## Running the Application
+
+Run the Docker container with the following command to start the application:
+
+```shell
+docker run --name car-pooling-challenge -p 9091:9091 car-pooling-challenge:latest
+```
+
+This command runs the container and maps the container's port 9091 to port 9091 on the host, allowing you to access the application via localhost:9091.
+
+# Car Pooling Service Challenge [↑](#index)
 
 Design/implement a system to manage car pooling.
 
@@ -221,7 +309,7 @@ following survey:
 
 Your participation is really important. Thanks for your contribution!
 
-# Proposed solution and decision documentation <a id="dev-doc" name="dev-doc"></a>
+# Proposed solution and decision documentation [↑](#index)
 
 # Key Architectural Decisions
 This car pooling is designed to efficiently manage and assign cars to groups of people, taking as priorities the separation of concern, a focus on scalability and maintainability and simplicity of code. Patterns like CQRS, Ports and Adapters makes easy to follow the principles of clean architecture architecture.
@@ -241,7 +329,7 @@ While the current implementation is straightforward, it writes the path for adop
 
 In such architectures, the car assignment process could be triggered by events (e.g., a new journey request or a car becoming available), further optimizing resource usage and responsiveness.
 
-# App flow <a id="app-flow" name="app-flow"></a>
+# App flow
 
 ## Car Assignment logic
 
